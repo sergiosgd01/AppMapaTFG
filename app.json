@@ -1,4 +1,11 @@
 {
   "name": "AppMapaTFG",
-  "displayName": "AppMapaTFG"
+  "displayName": "AppMapaTFG",
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "aff4fb5a-7b2f-4d47-be47-3a2397f6a4bd"
+      }
+    }
+  }
 }
