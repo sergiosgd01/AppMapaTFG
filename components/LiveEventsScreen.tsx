@@ -20,6 +20,18 @@ export default function LiveEventsScreen({ route, navigation }) {
       setShowWelcomeMessage(false);
     }, 3000);
 
+    // Intercepta el evento de retroceso físico solo en LiveEventsScreen
+    const backHandler = navigation.addListener('beforeRemove', (e) => {
+      // Evita que el evento de retroceso físico tenga efecto
+      e.preventDefault();
+    });
+
+    // Limpia el listener al desmontar el componente
+    return () => {
+      backHandler();
+      clearTimeout(timer);
+    };
+
   }, [selectedProvince]);
 
   const fetchEvents = () => {
@@ -173,7 +185,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 5,
+    borderRadius:
+5,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: {

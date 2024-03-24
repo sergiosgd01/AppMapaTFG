@@ -45,10 +45,6 @@ export default function LoginScreen({ navigation }) {
           AsyncStorage.removeItem('userData');
           console.log('Datos de usuario eliminados de AsyncStorage.');
         }
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Events' }],
-        });
       } else {
         setErrorMessage(data.message);
       }

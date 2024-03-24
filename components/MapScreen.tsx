@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Button, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Switch, Alert, Image } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import provincias from '../provincias';
 
@@ -14,47 +14,61 @@ export default function MapScreen({ route, navigation }) {
   const [showRoute, setShowRoute] = useState(false);
   const [showServices, setShowServices] = useState(false);
   const [serviceLocations, setServiceLocations] = useState([]);
+  const [improveLocation, setImproveLocation] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
   const mapViewRef = useRef(null);
 
+  const fetchData = async () => {
+    console.log('fetchData');
+    await fetchLocationMarkers();
+    await fetchRouteMarkers();
+    setIsLoading(false);
+    setMapVisible(true);
+  };
+
+  // Este efecto se ejecuta cuando cambia la variable 'improveLocation' o cuando el componente se monta inicialmente.
   useEffect(() => {
-    const fetchData = async () => {
-      console.log('fetchData');
-      await fetchLocationMarkers();
-      await fetchRouteMarkers();
-      setIsLoading(false);
-    };
+      fetchData(); // Se ejecuta fetchData inmediatamente
 
-    fetchData();
+      // Si es un evento en vivo, se establece un intervalo para actualizar periódicamente los datos.
+      if (fromLiveEvents) {
+        const TIME_DISTANCE = event.time_distance;
+        const [time, distance] = TIME_DISTANCE.split('-').map(Number);
+        if (time === 0) {
+          const interval = setInterval(fetchData, 60000); // Intervalo de 60 segundos
+          return () => clearInterval(interval); // Se limpia el intervalo cuando el componente se desmonta
+        } else if (time < 30) {
+          const interval = setInterval(fetchData, 30000); // Intervalo de 30 segundos
+          return () => clearInterval(interval); // Se limpia el intervalo cuando el componente se desmonta
+        } else {
+          const interval = setInterval(fetchData, time * 1000); // Intervalo según el tiempo especificado
+          return () => clearInterval(interval); // Se limpia el intervalo cuando el componente se desmonta
+        }
+      }
+    }, [improveLocation]); // Se ejecuta cuando 'improveLocation' cambia
 
-    if(fromLiveEvents) {
-      const TIME_DISTANCE = event.time_distance;
-      const [time, distance] = TIME_DISTANCE.split('-').map(Number);
-      if(time == 0) {
-		const interval = setInterval(fetchData, 60000);
-		return () => clearInterval(interval);
-	  }
-	  else {
-        const interval = setInterval(fetchData, time * 1000);
-        return () => clearInterval(interval);
-	  }
-  	}
-  }, []);
-
+  // Este efecto se ejecuta cuando cambia la variable 'locationMarkers'.
   useEffect(() => {
-    // Cuando la lista de marcadores de ubicación se actualice, calcular la región inicial
-    if(locationMarkers.length > 0) {
-      const lastLocation = locationMarkers[locationMarkers.length - 1];
-      const region = {
-        latitude: parseFloat(lastLocation.latitude),
-        longitude: parseFloat(lastLocation.longitude),
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      };
-      setInitialRegion(region);
+      // Esta función se ejecuta cada vez que se activa el efecto
+      if (locationMarkers.length > 0) {
+        const lastLocation = locationMarkers[locationMarkers.length - 1]; // Última ubicación
+        const region = {
+          latitude: parseFloat(lastLocation.latitude),
+          longitude: parseFloat(lastLocation.longitude),
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        };
+        setInitialRegion(region); // Se actualiza la región inicial del mapa
+        mapViewRef.current?.animateToRegion(region, 1000); // Se anima la vista del mapa a la nueva región
+      }
+    }, [locationMarkers]); // Se ejecuta cuando 'locationMarkers' cambia
 
-      mapViewRef.current?.animateToRegion(region, 1000);
-    }
-  }, [locationMarkers]);
+  // Este efecto se ejecuta cuando cambia la variable 'routeMarkers'.
+  useEffect(() => {
+      // Esta función se ejecuta cada vez que se activa el efecto
+      const correctedLocationMarkers = improveLocation ? getNearestRouteLocations(locationMarkers, routeMarkers) : locationMarkers;
+      setLocationMarkers(correctedLocationMarkers); // Se actualizan los marcadores de ubicación según la opción 'improveLocation'
+    }, [routeMarkers]); // Se ejecuta cuando 'routeMarkers' cambia
 
   const fetchLocationMarkers = async () => {
     try {
@@ -98,6 +112,18 @@ export default function MapScreen({ route, navigation }) {
     }
   };
 
+  const handleShowRoute = () => {
+    if (routeMarkers.length === 0) {
+      Alert.alert(
+        'Ruta no disponible',
+        'No hay datos disponibles para mostrar la ruta en este evento.',
+        [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+      );
+    } else {
+      setShowRoute(!showRoute);
+    }
+  };
+
   const handleShowServices = async () => {
       try {
         const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_service_code.php?code=${event.code}`);
@@ -118,19 +144,7 @@ export default function MapScreen({ route, navigation }) {
   	} catch (error) {
   	  console.error('Error al obtener las ubicaciones de los servicios:', error);
   	}
-    };
-
-    const handleShowRoute = () => {
-      if (routeMarkers.length === 0) {
-        Alert.alert(
-          'Ruta no disponible',
-          'No hay datos disponibles para mostrar la ruta en este evento.',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
-        );
-      } else {
-        setShowRoute(!showRoute);
-      }
-    };
+  };
 
   const calculateInitialRegion = (markers, lat = null, lng = null) => {
     let region = {
@@ -186,112 +200,165 @@ export default function MapScreen({ route, navigation }) {
     }
   };
 
-return (
-  <View style={{ flex: 1 }}>
-    {isLoading ? (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#000000" />
-      </View>
-    ) : (
-      <View style={{ flex: 1 }}>
-        <View style={{ flex: 0.75 }}>
-          <MapView
-            ref={mapViewRef}
-            style={{ flex: 1 }}
-            initialRegion={initialRegion}
-          >
-            {/* Marcadores de ubicaciones */}
-            {locationMarkers.map((marker, index) => {
-              // Mostrar marcador solo en la última ubicación
-              if (index === locationMarkers.length - 1) {
-                return (
-                  <Marker
-                    key={index}
-                    coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
-                    pinColor={'blue'}
-                  />
-                );
-              } else {
-                return null;
-              }
-            })}
-            <Polyline
-              coordinates={locationPolylineCoordinates}
-              strokeColor="#3388ff"
-              strokeWidth={4}
-            />
-            {showRoute && ( // Mostrar la línea y marcadores de la ruta solo si showRoute es true
-              <>
-                <Polyline
-                  coordinates={routePolylineCoordinates}
-                  strokeColor="#ff0000"
-                  strokeWidth={4}
-                  lineDashPattern={[5, 10]}
-                />
-                {routeMarkers.map((marker, index) => {
-                  // Mostrar marcador solo en la última ubicación
-                  if (index === 0 || index === routeMarkers.length - 1) {
+  const findNearestRouteLocation = (location, routeCoordinates, maxDistance) => {
+    let minDistance = Infinity;
+    let nearestLocation = null;
+
+    routeCoordinates.forEach(routeCoord => {
+      const distance = calculateDistance(location.latitude, location.longitude, routeCoord.latitude, routeCoord.longitude);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestLocation = routeCoord;
+      }
+    });
+
+    if (minDistance <= maxDistance) {
+      return nearestLocation;
+    } else {
+      return null;
+    }
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = (lat2 - lat1) * (Math.PI / 180); // Convertir a radianes
+    const dLon = (lon2 - lon1) * (Math.PI / 180); // Convertir a radianes
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distancia en km
+    return d;
+  };
+
+  const getNearestRouteLocations = (locationMarkers, routeMarkers) => {
+    const maxDistance = 1; // Cambia el 10 por la distancia máxima deseada
+    const correctedLocations = locationMarkers.map(location => {
+      const nearestRouteLocation = findNearestRouteLocation(location, routeMarkers, maxDistance);
+      return nearestRouteLocation ? nearestRouteLocation : location;
+    });
+    return correctedLocations;
+  };
+
+  const correctedLocationMarkers = improveLocation ? getNearestRouteLocations(locationMarkers, routeMarkers) : locationMarkers;
+
+  return (
+    <View style={{ flex: 1 }}>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#000000" />
+        </View>
+      ) : (
+        // Mostrar el mapa solo cuando mapVisible sea verdadero
+        mapVisible && (
+          <View style={{ flex: 1 }}>
+            <View style={{ flex: 0.75 }}>
+              <MapView
+                ref={mapViewRef}
+                style={{ flex: 1 }}
+                initialRegion={initialRegion}
+              >
+                {/* Marcadores de ubicaciones */}
+                {locationMarkers.map((marker, index) => {
+                  if (index === locationMarkers.length - 1) {
                     return (
                       <Marker
                         key={index}
                         coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
-						pinColor={index === 0 ? 'green' : 'red'}
-						onPress={() => {
-                          if (index === 0) {
-                            Alert.alert(
-                              'Punto de partida',
-                              'Este es el punto de partida del recorrido.'
-                            );
-                          } else if (index === routeMarkers.length - 1){
-                            Alert.alert(
-                              'Punto final',
-                              'Este es el punto final del recorrido.'
-                            );
-                          }
-                          else {
-                            return null;
-                          }
-                        }}
+                        pinColor={'blue'}
                       />
                     );
                   } else {
                     return null;
                   }
                 })}
-              </>
-            )}
-            {/* Marcadores de los servicios */}
-            {showServices && serviceLocations.map((service, index) => {
-              const iconUrl = getMarkerIcon(service.typeID);
-              return (
-                <Marker
-                  key={index}
-                  coordinate={{ latitude: parseFloat(service.latitude), longitude: parseFloat(service.longitude) }}
-                  image={{ uri: iconUrl }}
+                <Polyline
+                  coordinates={locationPolylineCoordinates}
+                  strokeColor="#3388ff"
+                  strokeWidth={5}
                 />
-              );
-            })}
-          </MapView>
-        </View>
-        <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
-          <Text style={styles.title}>{event.name}</Text>
-          <Text style={styles.title}>{eventSchedule}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-            <Text>Última actualización: {formattedLastLocationMarkerTime}</Text>
+                {showRoute && (
+                  <>
+                    <Polyline
+                      coordinates={routePolylineCoordinates}
+                      strokeColor="#ff0000"
+                      strokeWidth={4}
+                      lineDashPattern={[5, 10]}
+                    />
+                    {routeMarkers.map((marker, index) => {
+                      if (index === 0 || index === routeMarkers.length - 1) {
+                        return (
+                          <Marker
+                            key={index}
+                            coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+                            pinColor={index === 0 ? 'green' : 'red'}
+                            onPress={() => {
+                              if (index === 0) {
+                                Alert.alert(
+                                  'Punto de partida',
+                                  'Este es el punto de partida del recorrido.'
+                                );
+                              } else if (index === routeMarkers.length - 1) {
+                                Alert.alert(
+                                  'Punto final',
+                                  'Este es el punto final del recorrido.'
+                                );
+                              }
+                            }}
+                          />
+                        );
+                      } else {
+                        return null;
+                      }
+                    })}
+                  </>
+                )}
+                {/* Marcadores de los servicios */}
+                {showServices && serviceLocations.map((service, index) => {
+                  const iconUrl = getMarkerIcon(service.type);
+                  return (
+                    <Marker
+                      key={index}
+                      coordinate={{ latitude: parseFloat(service.latitude), longitude: parseFloat(service.longitude) }}
+                      image={{ uri: iconUrl }}
+                    />
+                  );
+                })}
+              </MapView>
+            </View>
+            <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+              <Text style={styles.title}>{event.name}</Text>
+              <Text style={styles.title}>{eventSchedule}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+                <Text>Última actualización: {formattedLastLocationMarkerTime}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10 }}>
+                <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
+                  <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
+                  <Text style={styles.buttonText}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Mejorar Ubicación</Text>
+                <Switch
+                  onValueChange={setImproveLocation}
+                  value={improveLocation}
+                />
+                <TouchableOpacity style={styles.updateMarkersButton} onPress={fetchData}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image source={{ uri: 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_reload.png' }} style={styles.imageStyle} />
+                  <Text style={styles.buttonText}>Actualizar Marcadores</Text>
+			    </View>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
-              <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
-              <Text style={styles.buttonText}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    )}
-  </View>
-);
+        )
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -334,5 +401,22 @@ const styles = StyleSheet.create({
   },
   activeButton: {
     opacity: 0.8,
+  },
+  imageStyle: {
+    width: 20,
+    height: 20,
+    marginRight: 5,
+  },
+  updateMarkersButton: {
+    width: 150,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  improveLocationButton: {
+    width: 150,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
