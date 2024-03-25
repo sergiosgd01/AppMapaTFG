@@ -62,6 +62,10 @@ export default function LoginScreen({ navigation }) {
     });
   };
 
+  const handleCheckboxPress = () => {
+    setRememberMe(!rememberMe);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Iniciar Sesión</Text>
@@ -78,7 +82,7 @@ export default function LoginScreen({ navigation }) {
         value={password}
         onChangeText={setPassword}
       />
-      <View style={styles.checkboxContainer}>
+      <TouchableOpacity onPress={handleCheckboxPress} style={styles.checkboxContainer}>
         <CheckBox
           value={rememberMe}
           onValueChange={setRememberMe}
@@ -86,7 +90,7 @@ export default function LoginScreen({ navigation }) {
           tintColors={{ true: 'blue', false: 'black' }}
         />
         <Text style={styles.label}>Recuérdame</Text>
-      </View>
+      </TouchableOpacity>
       {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Iniciar Sesión</Text>

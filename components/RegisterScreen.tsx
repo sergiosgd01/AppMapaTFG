@@ -105,6 +105,10 @@ export default function RegisterScreen({ navigation }) {
     });
   };
 
+  const handleRememberMePress = () => {
+    setRememberMe(!rememberMe);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Crear una cuenta</Text>
@@ -145,7 +149,7 @@ export default function RegisterScreen({ navigation }) {
           <Picker.Item key={provincia} label={provincia} value={provincia} />
         ))}
       </Picker>
-      <View style={styles.checkboxContainer}>
+      <TouchableOpacity onPress={handleRememberMePress} style={styles.checkboxContainer}>
         <CheckBox
           value={rememberMe}
           onValueChange={setRememberMe}
@@ -153,7 +157,7 @@ export default function RegisterScreen({ navigation }) {
           tintColors={{ true: 'blue', false: 'black' }} // Cambia el color del tick del checkbox
         />
         <Text style={styles.label}>Recuérdame</Text>
-      </View>
+      </TouchableOpacity>
       {error ? <Text style={styles.errorMessage}>{error}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Crear Cuenta</Text>
