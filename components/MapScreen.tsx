@@ -15,15 +15,12 @@ export default function MapScreen({ route, navigation }) {
   const [showServices, setShowServices] = useState(false);
   const [serviceLocations, setServiceLocations] = useState([]);
   const [improveLocation, setImproveLocation] = useState(false);
-  const [mapVisible, setMapVisible] = useState(false);
   const mapViewRef = useRef(null);
 
   const fetchData = async () => {
-    console.log('fetchData');
     await fetchLocationMarkers();
     await fetchRouteMarkers();
     setIsLoading(false);
-    setMapVisible(true);
   };
 
   // Este efecto se ejecuta cuando cambia la variable 'improveLocation' o cuando el componente se monta inicialmente.
@@ -35,14 +32,14 @@ export default function MapScreen({ route, navigation }) {
         const TIME_DISTANCE = event.time_distance;
         const [time, distance] = TIME_DISTANCE.split('-').map(Number);
         if (time === 0) {
-          const interval = setInterval(fetchData, 60000); // Intervalo de 60 segundos
-          return () => clearInterval(interval); // Se limpia el intervalo cuando el componente se desmonta
+          const interval = setInterval(fetchData, 60000);
+          return () => clearInterval(interval);
         } else if (time < 30) {
-          const interval = setInterval(fetchData, 30000); // Intervalo de 30 segundos
-          return () => clearInterval(interval); // Se limpia el intervalo cuando el componente se desmonta
+          const interval = setInterval(fetchData, 30000);
+          return () => clearInterval(interval);
         } else {
-          const interval = setInterval(fetchData, time * 1000); // Intervalo según el tiempo especificado
-          return () => clearInterval(interval); // Se limpia el intervalo cuando el componente se desmonta
+          const interval = setInterval(fetchData, time * 1000);
+          return () => clearInterval(interval);
         }
       }
     }, [improveLocation]); // Se ejecuta cuando 'improveLocation' cambia
@@ -117,7 +114,7 @@ export default function MapScreen({ route, navigation }) {
       Alert.alert(
         'Ruta no disponible',
         'No hay datos disponibles para mostrar la ruta en este evento.',
-        [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+        [{ text: 'OK' }]
       );
     } else {
       setShowRoute(!showRoute);
@@ -127,13 +124,12 @@ export default function MapScreen({ route, navigation }) {
   const handleShowServices = async () => {
       try {
         const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_service_code.php?code=${event.code}`);
-        console.log('response: ', response);
         const locations = await response.json();
         if (locations.length === 0) {
         Alert.alert(
           'Sin servicios',
           'No hay servicios disponibles en este evento.',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+          [{ text: 'OK' }]
         );
         } else {
           setShowServices(!showServices);
@@ -220,19 +216,19 @@ export default function MapScreen({ route, navigation }) {
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radio de la Tierra en km
+    const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180); // Convertir a radianes
     const dLon = (lon2 - lon1) * (Math.PI / 180); // Convertir a radianes
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c; // Distancia en km
+    const d = R * c;
     return d;
   };
 
   const getNearestRouteLocations = (locationMarkers, routeMarkers) => {
-    const maxDistance = 1; // Cambia el 10 por la distancia máxima deseada
+    const maxDistance = 0.2; // km
     const correctedLocations = locationMarkers.map(location => {
       const nearestRouteLocation = findNearestRouteLocation(location, routeMarkers, maxDistance);
       return nearestRouteLocation ? nearestRouteLocation : location;
@@ -250,7 +246,6 @@ export default function MapScreen({ route, navigation }) {
         </View>
       ) : (
         // Mostrar el mapa solo cuando mapVisible sea verdadero
-        mapVisible && (
           <View style={{ flex: 1 }}>
             <View style={{ flex: 0.75 }}>
               <MapView
@@ -327,11 +322,14 @@ export default function MapScreen({ route, navigation }) {
               </MapView>
             </View>
             <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
-              <Text style={styles.title}>{event.name}</Text>
               <Text style={styles.title}>{eventSchedule}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-                <Text>Última actualización: {formattedLastLocationMarkerTime}</Text>
-              </View>
+              {formattedLastLocationMarkerTime && (  // Condición para mostrar "Última actualización:"
+                <>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+                    <Text>Última actualización: {formattedLastLocationMarkerTime}</Text>
+                  </View>
+                </>
+              )}
               <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10 }}>
                 <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
                   <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
@@ -341,21 +339,22 @@ export default function MapScreen({ route, navigation }) {
                 </TouchableOpacity>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Mejorar Ubicación</Text>
-                <Switch
-                  onValueChange={setImproveLocation}
-                  value={improveLocation}
-                />
-                <TouchableOpacity style={styles.updateMarkersButton} onPress={fetchData}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image source={{ uri: 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_reload.png' }} style={styles.imageStyle} />
-                  <Text style={styles.buttonText}>Actualizar Marcadores</Text>
-			    </View>
+                <TouchableOpacity style={[styles.commonButton, styles.improveLocationButton]} onPress={() => setImproveLocation(!improveLocation)}>
+                  <Text style={[styles.buttonText, {color: '#333'}]}>Mejorar Ubicación</Text>
+                  <Switch
+                    onValueChange={() => setImproveLocation(!improveLocation)}
+                    value={improveLocation}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Image source={{ uri: 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_reload.png' }} style={styles.imageStyle} />
+                    <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
-        )
       )}
     </View>
   );
@@ -407,16 +406,18 @@ const styles = StyleSheet.create({
     height: 20,
     marginRight: 5,
   },
-  updateMarkersButton: {
-    width: 150,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   improveLocationButton: {
     width: 150,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 10,
+  },
+  commonButton: {
+    width: 150,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
   },
 });

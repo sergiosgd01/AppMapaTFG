@@ -40,10 +40,8 @@ export default function LoginScreen({ navigation }) {
         navigation.navigate('Events', { screen: 'Eventos en Directo', params: { user: data.usuario } });
         if (rememberMe) {
           AsyncStorage.setItem('userData', JSON.stringify({ email, password }));
-          console.log('Datos de usuario guardados:', { email, password });
         } else {
           AsyncStorage.removeItem('userData');
-          console.log('Datos de usuario eliminados de AsyncStorage.');
         }
       } else {
         setErrorMessage(data.message);

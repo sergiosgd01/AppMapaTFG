@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, Image } from 'react-native';
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { Picker } from '@react-native-picker/picker';
 import provincias from '../provincias';
@@ -37,24 +37,25 @@ export default function MapMultiScreen({ route, navigation }) {
   const [showServices, setShowServices] = useState(false);
   const [serviceLocations, setServiceLocations] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log('fetchData');
-      await fetchUserLocations();
-      await fetchRouteMarkers();
-      setIsLoading(false);
-    };
+  const fetchData = async () => {
+    await fetchUserLocations();
+    await fetchRouteMarkers();
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     fetchData();
 
     if (fromLiveEvents) {
       const TIME_DISTANCE = event.time_distance;
       const [time, distance] = TIME_DISTANCE.split('-').map(Number);
-      if (time == 0) {
+      if (time === 0) {
         const interval = setInterval(fetchData, 60000);
         return () => clearInterval(interval);
-      }
-      else {
+      } else if (time < 20) {
+        const interval = setInterval(fetchData, 20000);
+        return () => clearInterval(interval);
+      } else {
         const interval = setInterval(fetchData, time * 1000);
         return () => clearInterval(interval);
       }
@@ -149,7 +150,7 @@ export default function MapMultiScreen({ route, navigation }) {
       Alert.alert(
         'Sin servicios',
         'No hay servicios disponibles en este evento.',
-        [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+        [{ text: 'OK' }]
       );
       } else {
         setShowServices(!showServices);
@@ -167,7 +168,7 @@ export default function MapMultiScreen({ route, navigation }) {
       Alert.alert(
         'Ruta no disponible',
         'No hay datos disponibles para mostrar la ruta en este evento.',
-        [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+        [{ text: 'OK' }]
       );
     } else {
       setShowRoute(!showRoute);
@@ -388,20 +389,31 @@ return (
           </MapView>
         </View>
         <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
-          <Text style={styles.title}>{event.name}</Text>
           <Text style={styles.title}>{eventSchedule}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-            <Text>Última actualización: {formattedLastMarkerTime}</Text>
-          </View>
-          <Picker
-            selectedValue={selectedDorsal}
-            style={{ height: 50, width: 150 }}
-            onValueChange={(itemValue, itemIndex) => setSelectedDorsal(itemValue)}
-          >
-            {allDorsals.map((dorsal, index) => (
-              <Picker.Item key={index} label={dorsal} value={dorsal} />
-            ))}
-          </Picker>
+          {formattedLastMarkerTime && (  // Condición para mostrar "Última actualización:"
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+                <Text>Última actualización: {formattedLastMarkerTime}</Text>
+              </View>
+            </>
+          )}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+            <Picker
+              selectedValue={selectedDorsal}
+              style={{ height: 50, width: 150 }}
+              onValueChange={(itemValue, itemIndex) => setSelectedDorsal(itemValue)}
+            >
+              {allDorsals.map((dorsal, index) => (
+                <Picker.Item key={index} label={dorsal} value={dorsal} />
+              ))}
+            </Picker>
+            <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image source={{ uri: 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_reload.png' }} style={styles.imageStyle} />
+                <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
+              </View>
+            </TouchableOpacity>
+		  </View>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
               <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
@@ -497,5 +509,17 @@ const styles = StyleSheet.create({
   calloutText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  imageStyle: {
+    width: 20,
+    height: 20,
+    marginRight: 5,
+  },
+  commonButton: {
+    width: 150,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
   },
 });

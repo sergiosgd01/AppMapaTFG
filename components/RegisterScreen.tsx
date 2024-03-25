@@ -72,10 +72,8 @@ export default function RegisterScreen({ navigation }) {
           if (data.success) {
             if (rememberMe) {
               AsyncStorage.setItem('userData', JSON.stringify({ email, password }));
-              console.log('Datos de usuario guardados:', { email, password });
             } else {
               AsyncStorage.removeItem('userData');
-              console.log('Datos de usuario eliminados de AsyncStorage.');
             }
             navigation.reset({
               index: 0,
