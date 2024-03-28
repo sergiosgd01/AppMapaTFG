@@ -4,6 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import provincias from '../provincias';
 import CheckBox from '@react-native-community/checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PropTypes from 'prop-types';
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -166,52 +167,56 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
+RegisterScreen.propTypes = {
+  navigation: PropTypes.object.isRequired,
+};
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    width: '100%',
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
   button: {
     backgroundColor: 'blue',
-    padding: 10,
     borderRadius: 5,
     marginTop: 10,
+    padding: 10,
   },
   buttonText: {
     color: 'white',
-    textAlign: 'center',
     fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  checkbox: {
+    alignSelf: 'center',
+  },
+  checkboxContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  container: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   errorMessage: {
     color: 'red',
     marginBottom: 10,
   },
-  checkboxContainer: {
-    flexDirection: 'row',
+  input: {
+    borderColor: '#ccc',
+    borderRadius: 5,
+    borderWidth: 1,
+    height: 40,
     marginBottom: 10,
-    alignItems: 'center',
-  },
-  checkbox: {
-    alignSelf: 'center',
+    paddingHorizontal: 10,
+    width: '100%',
   },
   label: {
-    margin: 8,
     color: 'black',
+    margin: 8,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
 });

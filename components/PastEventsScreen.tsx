@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, A
 import { Picker } from '@react-native-picker/picker';
 import { format } from 'date-fns';
 import provincias from '../provincias';
+import PropTypes from 'prop-types';
 
 export default function PastEventsScreen({ route, navigation }) {
   const user = route.params && route.params.user;
@@ -97,7 +98,7 @@ export default function PastEventsScreen({ route, navigation }) {
         </Picker>
       </View>
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" style={styles.spinner} />
+        <ActivityIndicator size="large" color="#000000" style={styles.spinner} />
       ) : (
         <>
           {events.length === 0 && (
@@ -116,37 +117,43 @@ export default function PastEventsScreen({ route, navigation }) {
   );
 }
 
+PastEventsScreen.propTypes = {
+  route: PropTypes.object,
+  navigation: PropTypes.object,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  eventItem: {
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+  eventDateTime: {
+    color: '#666',
+    fontSize: 16,
   },
   eventDetails: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
   },
   eventImage: {
-    width: 100,
+    borderRadius: 10,
     height: 100,
     marginRight: 10,
-    borderRadius: 10,
+    width: 100,
+  },
+  eventItem: {
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+    paddingVertical: 20,
   },
   eventName: {
     fontSize: 18,
     fontWeight: 'bold',
   },
-  eventDateTime: {
-    fontSize: 16,
-    color: '#666',
-  },
-  picker: {
-    width: '40%',
-    height: 40,
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 10,
   },
   noEventsMessage: {
@@ -154,21 +161,39 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   noEventsText: {
+    color: '#666',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#666',
+  },
+  picker: {
+    height: 40,
+    marginBottom: 10,
+    width: '40%',
+  },
+  searchInput: {
+    borderColor: 'gray',
+    borderWidth: 1,
+    height: 40,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    width: '60%',
+  },
+  spinner: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
   welcomeMessage: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     alignItems: 'center',
     backgroundColor: '#fff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 5,
+    bottom: 0,
     elevation: 3,
+    left: 0,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    position: 'absolute',
+    right: 0,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -179,27 +204,8 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   welcomeText: {
+    color: '#333',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
-  },
-  searchInput: {
-    height: 40,
-    width: '60%',
-    borderColor: 'gray',
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  spinner: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

@@ -11,6 +11,11 @@ import UpcomingEventsScreen from './components/UpcomingEventsScreen';
 import PastEventsScreen from './components/PastEventsScreen';
 import MapMultiScreen from './components/MapMultiScreen';
 import MapScreen from './components/MapScreen';
+import PropTypes from 'prop-types';
+
+import pastEventsIcon from './assets/iconPastEvents.png';
+import liveEventsIcon from './assets/iconLiveEvents.png';
+import upcomingEventsIcon from './assets/iconUpcomingEvents.png';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -49,9 +54,9 @@ function MyTabBar({ state, descriptors, navigation }) {
         };
 
         const icons = {
-          'Eventos Pasados': 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/iconPastEvents.png',
-          'Eventos en Directo': 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/iconLiveEvents.png',
-          'Eventos Futuros': 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/iconUpcomingEvents.png'
+          'Eventos Pasados': pastEventsIcon,
+          'Eventos en Directo': liveEventsIcon,
+          'Eventos Futuros': upcomingEventsIcon
         };
 
         return (
@@ -64,7 +69,7 @@ function MyTabBar({ state, descriptors, navigation }) {
             style={{ flex: 1, alignItems: 'center' }}
           >
             <Image
-              source={{ uri: icons[label] }}
+              source={icons[label]}
               style={{ width: 25, height: 25, marginBottom: 3, marginTop: 4, tintColor: isFocused ? '#3A97FF' : '#222' }}
             />
             <Text style={{ color: isFocused ? '#3A97FF' : '#222', marginBottom: 3, fontSize: 11, fontWeight: 'bold' }}>
@@ -115,3 +120,9 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+MyTabBar.propTypes = {
+  state: PropTypes.object.isRequired,
+  descriptors: PropTypes.object.isRequired,
+  navigation: PropTypes.object.isRequired
+};

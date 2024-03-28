@@ -2,6 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Switch, Alert, Image } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import provincias from '../provincias';
+import PropTypes from 'prop-types';
+import reloadIcon from '../assets/iconReload.png';
+import iconBañoPublico from '../assets/iconBañoPublico.png';
+import iconPrimerosAuxilios from '../assets/iconPrimerosAuxilios.png';
+import iconPuntoVioleta from '../assets/iconPuntoVioleta.png';
 
 export default function MapScreen({ route, navigation }) {
   const { event, fromLiveEvents } = route.params;
@@ -122,24 +127,24 @@ export default function MapScreen({ route, navigation }) {
   };
 
   const handleShowServices = async () => {
-      try {
-        const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_service_code.php?code=${event.code}`);
-        const locations = await response.json();
-        if (locations.length === 0) {
-        Alert.alert(
-          'Sin servicios',
-          'No hay servicios disponibles en este evento.',
-          [{ text: 'OK' }]
-        );
-        } else {
-          setShowServices(!showServices);
-          if (!showServices) {
-            fetchServiceLocations();
-          }
+    try {
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_service_code.php?code=${event.code}`);
+      const locations = await response.json();
+      if (locations.length === 0) {
+      Alert.alert(
+        'Sin servicios',
+        'No hay servicios disponibles en este evento.',
+        [{ text: 'OK' }]
+      );
+      } else {
+         setShowServices(!showServices);
+        if (!showServices) {
+          fetchServiceLocations();
         }
-  	} catch (error) {
+      }
+    } catch (error) {
   	  console.error('Error al obtener las ubicaciones de los servicios:', error);
-  	}
+    }
   };
 
   const calculateInitialRegion = (markers, lat = null, lng = null) => {
@@ -188,11 +193,13 @@ export default function MapScreen({ route, navigation }) {
   const getMarkerIcon = (type) => {
     switch (type) {
       case "Baño Público":
-        return `https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_BañoPublico.png`;
+        return iconBañoPublico;
       case "Punto de Primeros Auxilios":
-        return `https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_PrimerosAuxilios.png`;
+        return iconPrimerosAuxilios;
       case "Punto Violeta":
-        return `https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_PuntoVioleta.png`;
+        return iconPuntoVioleta;
+      default:
+        return null;
     }
   };
 
@@ -310,20 +317,24 @@ export default function MapScreen({ route, navigation }) {
                 )}
                 {/* Marcadores de los servicios */}
                 {showServices && serviceLocations.map((service, index) => {
-                  const iconUrl = getMarkerIcon(service.type);
+                  const icon = getMarkerIcon(service.type);
                   return (
                     <Marker
                       key={index}
-                      coordinate={{ latitude: parseFloat(service.latitude), longitude: parseFloat(service.longitude) }}
-                      image={{ uri: iconUrl }}
-                    />
+                      coordinate={{
+                        latitude: parseFloat(service.latitude),
+                        longitude: parseFloat(service.longitude)
+                      }}
+                    >
+                      {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
+                    </Marker>
                   );
                 })}
               </MapView>
             </View>
             <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
               <Text style={styles.title}>{eventSchedule}</Text>
-              {formattedLastLocationMarkerTime && (  // Condición para mostrar "Última actualización:"
+              {formattedLastLocationMarkerTime && (
                 <>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
                     <Text>Última actualización: {formattedLastLocationMarkerTime}</Text>
@@ -348,7 +359,7 @@ export default function MapScreen({ route, navigation }) {
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Image source={{ uri: 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_reload.png' }} style={styles.imageStyle} />
+                    <Image source={reloadIcon} style={styles.imageStyle} />
                     <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
                   </View>
                 </TouchableOpacity>
@@ -360,64 +371,63 @@ export default function MapScreen({ route, navigation }) {
   );
 }
 
+MapScreen.propTypes = {
+  route: PropTypes.object.isRequired,
+  navigation: PropTypes.object.isRequired,
+};
+
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
-    marginTop: 10,
-  },
-  showRouteButton: {
-    width: 150,
-    height: 50,
-    backgroundColor: '#3388ff',
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  showServicesButton: {
-    width: 150,
-    height: 50,
-    backgroundColor: '#ff0000',
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 10,
+  activeButton: {
+    opacity: 0.8,
   },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
   },
-  activeButton: {
-    opacity: 0.8,
+  commonButton: {
+    alignItems: 'center',
+    height: 50,
+    justifyContent: 'center',
+    marginHorizontal: 5,
+    width: 150,
   },
   imageStyle: {
-    width: 20,
     height: 20,
     marginRight: 5,
+    width: 20,
   },
   improveLocationButton: {
-    width: 150,
+    alignItems: 'center',
     height: 50,
     justifyContent: 'center',
-    alignItems: 'center',
     marginTop: 10,
-  },
-  commonButton: {
     width: 150,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  showRouteButton: {
+    alignItems: 'center',
+    backgroundColor: '#3388ff',
+    borderRadius: 5,
     height: 50,
     justifyContent: 'center',
+    marginRight: 10,
+    width: 150,
+  },
+  showServicesButton: {
     alignItems: 'center',
-    marginHorizontal: 5,
+    backgroundColor: '#ff0000',
+    borderRadius: 5,
+    height: 50,
+    justifyContent: 'center',
+    marginLeft: 10,
+    width: 150,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });

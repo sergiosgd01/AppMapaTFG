@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, Ima
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { Picker } from '@react-native-picker/picker';
 import provincias from '../provincias';
+import PropTypes from 'prop-types';
 
 // Componente personalizado para el marcador con el número de dorsal dentro de un círculo
 const CustomMarker = ({ coordinate, dorsal, color, name, onPress }) => (
@@ -12,7 +13,7 @@ const CustomMarker = ({ coordinate, dorsal, color, name, onPress }) => (
         <Text style={styles.markerText}>{dorsal}</Text>
       </View>
     </View>
-    {name && ( // Verificar si name no es null antes de renderizar el Callout
+    {name && (
       <Callout style={styles.calloutContainer}>
         <Text style={styles.calloutText}>{name}</Text>
       </Callout>
@@ -26,7 +27,7 @@ export default function MapMultiScreen({ route, navigation }) {
   const [eventSchedule, setEventSchedule] = useState('');
   const [formattedLastMarkerTime, setFormattedLastMarkerTime] = useState('');
   const [selectedDorsal, setSelectedDorsal] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Estado para controlar la carga
+  const [isLoading, setIsLoading] = useState(false);
   const uniqueDorsals = [...new Set(userLocations.map(location => location.dorsal))];
   const allOption = 'Todos';
   const allDorsals = [allOption, ...uniqueDorsals];
@@ -273,14 +274,9 @@ const generateMapMarkers = () => {
   }
 };
 
-
-
-
-const handleMarkerPress = (dorsal) => {
-  // Aquí puedes manejar la pulsación del marcador, como mostrar un estado
-  // para controlar qué `Callout` se muestra en el mapa.
-  setSelectedDorsal(dorsal);
-};
+  const handleMarkerPress = (dorsal) => {
+    setSelectedDorsal(dorsal);
+  };
 
   // Obtener las polilíneas según la selección del usuario
   const generateMapPolylines = () => {
@@ -401,7 +397,7 @@ return (
             <Picker
               selectedValue={selectedDorsal}
               style={{ height: 50, width: 150 }}
-              onValueChange={(itemValue, itemIndex) => setSelectedDorsal(itemValue)}
+              onValueChange={(itemValue) => setSelectedDorsal(itemValue)}
             >
               {allDorsals.map((dorsal, index) => (
                 <Picker.Item key={index} label={dorsal} value={dorsal} />
@@ -429,43 +425,14 @@ return (
 );
 }
 
+MapMultiScreen.propTypes = {
+  route: PropTypes.object.isRequired,
+  navigation: PropTypes.object.isRequired,
+};
+
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  markerContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  marker: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  markerText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  spinnerContainer: {
-    flex: 1,
-    justifyContent: "center"
-  },
-  horizontal: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 10
-  },
-  toggleRouteButton: {
-    marginTop: 10,
-    color: '#3388ff',
-    textDecorationLine: 'underline',
+  activeButton: {
+    opacity: 0.8,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -473,53 +440,82 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 10,
   },
-  showRouteButton: {
-    width: 150,
-    height: 50,
-    backgroundColor: '#3388ff',
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  showServicesButton: {
-    width: 150,
-    height: 50,
-    backgroundColor: '#ff0000',
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 10,
-  },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
   },
-  activeButton: {
-    opacity: 0.8,
-  },
   calloutContainer: {
-    width: 100,
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: 'white',
-    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    justifyContent: 'center',
+    padding: 10,
+    width: 100,
   },
   calloutText: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-  imageStyle: {
-    width: 20,
-    height: 20,
-    marginRight: 5,
-  },
   commonButton: {
-    width: 150,
+    alignItems: 'center',
     height: 50,
     justifyContent: 'center',
-    alignItems: 'center',
     marginHorizontal: 5,
+    width: 150,
+  },
+  horizontal: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 10
+  },
+  imageStyle: {
+    height: 20,
+    marginRight: 5,
+    width: 20,
+  },
+  marker: {
+    alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: 40,
+  },
+  markerContainer: {
+    alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  markerText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  showRouteButton: {
+    alignItems: 'center',
+    backgroundColor: '#3388ff',
+    borderRadius: 5,
+    height: 50,
+    justifyContent: 'center',
+    marginRight: 10,
+    width: 150,
+  },
+  showServicesButton: {
+    alignItems: 'center',
+    backgroundColor: '#ff0000',
+    borderRadius: 5,
+    height: 50,
+    justifyContent: 'center',
+    marginLeft: 10,
+    width: 150,
+  },
+  spinnerContainer: {
+    flex: 1,
+    justifyContent: "center"
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });
