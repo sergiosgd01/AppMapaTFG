@@ -155,7 +155,7 @@ export default function RegisterScreen({ navigation }) {
           value={rememberMe}
           onValueChange={setRememberMe}
           style={styles.checkbox}
-          tintColors={{ true: 'blue', false: 'black' }} // Cambia el color del tick del checkbox
+          tintColors={{ true: '#6C21DC', false: 'black' }}
         />
         <Text style={styles.label}>Recuérdame</Text>
       </TouchableOpacity>
@@ -173,10 +173,11 @@ RegisterScreen.propTypes = {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: 'blue',
+    backgroundColor: '#6C21DC',
     borderRadius: 5,
     marginTop: 10,
     padding: 10,
+    width: '100%',
   },
   buttonText: {
     color: 'white',

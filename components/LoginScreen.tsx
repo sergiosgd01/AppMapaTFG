@@ -90,7 +90,7 @@ export default function LoginScreen({ navigation }) {
           value={rememberMe}
           onValueChange={setRememberMe}
           style={styles.checkbox}
-          tintColors={{ true: 'blue', false: 'black' }}
+          tintColors={{ true: '#6C21DC', false: 'black' }}
         />
         <Text style={styles.label}>Recuérdame</Text>
       </TouchableOpacity>
@@ -114,10 +114,11 @@ LoginScreen.propTypes = {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: 'blue',
+    backgroundColor: '#6C21DC',
     borderRadius: 5,
     marginTop: 10,
     padding: 10,
+    width: '100%',
   },
   buttonText: {
     color: 'white',
@@ -139,20 +140,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   image: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
+    width: 150,
+    height: 150,
+    marginBottom: 40,
+    marginTop: -40,
   },
   continueButton: {
     backgroundColor: 'transparent',
-    borderColor: 'blue',
+    borderColor: '#6C21DC',
     borderRadius: 5,
     borderWidth: 1,
     marginTop: 20,
     padding: 10,
+    width: '100%',
   },
   continueButtonText: {
-    color: 'blue',
+    color: '#6C21DC',
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -175,14 +178,15 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     backgroundColor: 'transparent',
-    borderColor: 'red',
+    borderColor: '#DC219C',
     borderRadius: 5,
     borderWidth: 1,
     marginTop: 20,
     padding: 10,
+    width: '100%',
   },
   registerButtonText: {
-    color: 'red',
+    color: '#DC219C',
     fontWeight: 'bold',
     textAlign: 'center',
   },

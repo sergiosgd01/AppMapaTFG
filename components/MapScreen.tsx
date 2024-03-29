@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   },
   showRouteButton: {
     alignItems: 'center',
-    backgroundColor: '#3388ff',
+    backgroundColor: '#6C21DC',
     borderRadius: 5,
     height: 50,
     justifyContent: 'center',
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   },
   showServicesButton: {
     alignItems: 'center',
-    backgroundColor: '#ff0000',
+    backgroundColor: '#DC219C',
     borderRadius: 5,
     height: 50,
     justifyContent: 'center',

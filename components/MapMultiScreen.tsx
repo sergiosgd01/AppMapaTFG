@@ -4,6 +4,10 @@ import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { Picker } from '@react-native-picker/picker';
 import provincias from '../provincias';
 import PropTypes from 'prop-types';
+import reloadIcon from '../assets/iconReload.png';
+import iconBañoPublico from '../assets/iconBañoPublico.png';
+import iconPrimerosAuxilios from '../assets/iconPrimerosAuxilios.png';
+import iconPuntoVioleta from '../assets/iconPuntoVioleta.png';
 
 // Componente personalizado para el marcador con el número de dorsal dentro de un círculo
 const CustomMarker = ({ coordinate, dorsal, color, name, onPress }) => (
@@ -304,11 +308,13 @@ const generateMapMarkers = () => {
   const getMarkerIcon = (type) => {
     switch (type) {
       case "Baño Público":
-        return `https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_BañoPublico.png`;
+        return iconBañoPublico;
       case "Punto de Primeros Auxilios":
-        return `https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_PrimerosAuxilios.png`;
+        return iconPrimerosAuxilios;
       case "Punto Violeta":
-        return `https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_PuntoVioleta.png`;
+        return iconPuntoVioleta;
+      default:
+        return null;
     }
   };
 
@@ -373,13 +379,17 @@ return (
             )}
             {/* Marcadores de los servicios */}
             {showServices && serviceLocations.map((service, index) => {
-              const iconUrl = getMarkerIcon(service.type);
+              const icon = getMarkerIcon(service.type);
               return (
-                <Marker
+				<Marker
                   key={index}
-                  coordinate={{ latitude: parseFloat(service.latitude), longitude: parseFloat(service.longitude) }}
-                  image={{ uri: iconUrl }}
-                />
+                  coordinate={{
+                    latitude: parseFloat(service.latitude),
+                    longitude: parseFloat(service.longitude)
+                  }}
+                >
+                  {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
+                </Marker>
               );
             })}
           </MapView>
@@ -405,7 +415,7 @@ return (
             </Picker>
             <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Image source={{ uri: 'https://pruebaproyectouex.000webhostapp.com/proyectoTFG/imagenes/icono_reload.png' }} style={styles.imageStyle} />
+                <Image source={reloadIcon} style={styles.imageStyle} />
                 <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
               </View>
             </TouchableOpacity>
@@ -494,7 +504,7 @@ const styles = StyleSheet.create({
   },
   showRouteButton: {
     alignItems: 'center',
-    backgroundColor: '#3388ff',
+    backgroundColor: '#6C21DC',
     borderRadius: 5,
     height: 50,
     justifyContent: 'center',
@@ -503,7 +513,7 @@ const styles = StyleSheet.create({
   },
   showServicesButton: {
     alignItems: 'center',
-    backgroundColor: '#ff0000',
+    backgroundColor: '#DC219C',
     borderRadius: 5,
     height: 50,
     justifyContent: 'center',

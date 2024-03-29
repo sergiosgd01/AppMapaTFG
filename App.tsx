@@ -70,9 +70,9 @@ function MyTabBar({ state, descriptors, navigation }) {
           >
             <Image
               source={icons[label]}
-              style={{ width: 25, height: 25, marginBottom: 3, marginTop: 4, tintColor: isFocused ? '#3A97FF' : '#222' }}
+              style={{ width: 25, height: 25, marginBottom: 3, marginTop: 4, tintColor: isFocused ? '#6C21DC' : '#222' }}
             />
-            <Text style={{ color: isFocused ? '#3A97FF' : '#222', marginBottom: 3, fontSize: 11, fontWeight: 'bold' }}>
+            <Text style={{ color: isFocused ? '#6C21DC' : '#222', marginBottom: 3, fontSize: 11, fontWeight: 'bold' }}>
               {label}
             </Text>
           </TouchableOpacity>
