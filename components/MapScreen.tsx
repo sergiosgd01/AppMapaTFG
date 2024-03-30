@@ -245,6 +245,24 @@ export default function MapScreen({ route, navigation }) {
 
   const correctedLocationMarkers = improveLocation ? getNearestRouteLocations(locationMarkers, routeMarkers) : locationMarkers;
 
+  const showAlert = (cancelledInfo) => {
+    if (cancelledInfo === null) {
+      Alert.alert(
+        'Motivo de cancelación',
+        'Aún no se ha proporcionado ningún motivo para la cancelación. Mantente informado para conocer las actualizaciones sobre este tema. Gracias por tu paciencia y comprensión.',
+        [{ text: 'OK' }],
+        { cancelable: false }
+      );
+    } else {
+      Alert.alert(
+        'Motivo de cancelación',
+        cancelledInfo,
+        [{ text: 'OK' }],
+        { cancelable: false }
+      );
+    }
+  };
+
   return (
     <View style={{ flex: 1 }}>
       {isLoading ? (
@@ -252,7 +270,6 @@ export default function MapScreen({ route, navigation }) {
           <ActivityIndicator size="large" color="#000000" />
         </View>
       ) : (
-        // Mostrar el mapa solo cuando mapVisible sea verdadero
           <View style={{ flex: 1 }}>
             <View style={{ flex: 0.75 }}>
               <MapView
@@ -332,7 +349,17 @@ export default function MapScreen({ route, navigation }) {
                 })}
               </MapView>
             </View>
-            <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+            <View style={styles.container}>
+              {event.cancelled == 1 && (
+                <View style={styles.cancelledMessage}>
+                  <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.cancelledText}>Evento cancelado</Text>
+                      <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              )}
               <Text style={styles.title}>{eventSchedule}</Text>
               {formattedLastLocationMarkerTime && (
                 <>
@@ -346,16 +373,21 @@ export default function MapScreen({ route, navigation }) {
                   <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
-                  <Text style={styles.buttonText}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
+                  <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
                 </TouchableOpacity>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                <TouchableOpacity style={[styles.commonButton, styles.improveLocationButton]} onPress={() => setImproveLocation(!improveLocation)}>
-                  <Text style={[styles.buttonText, {color: '#333'}]}>Mejorar Ubicación</Text>
-                  <Switch
-                    onValueChange={() => setImproveLocation(!improveLocation)}
-                    value={improveLocation}
-                  />
+                <TouchableOpacity
+                  style={[styles.commonButton, styles.improveLocationButton]}
+                  onPress={() => setImproveLocation(!improveLocation)}
+                >
+                  <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+                    <Text style={[styles.buttonText, {color: '#333'}]}>Mejorar Ubicación</Text>
+                    <Switch
+                      onValueChange={() => setImproveLocation(!improveLocation)}
+                      value={improveLocation}
+                    />
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -377,6 +409,12 @@ MapScreen.propTypes = {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 0.20,
+    marginTop: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   activeButton: {
     opacity: 0.8,
   },
@@ -389,7 +427,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     marginHorizontal: 5,
-    width: 150,
+    width: 160,
   },
   imageStyle: {
     height: 20,
@@ -401,7 +439,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     marginTop: 10,
-    width: 150,
+    width: 160,
   },
   loadingContainer: {
     alignItems: 'center',
@@ -415,19 +453,42 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     marginRight: 10,
-    width: 150,
+    width: 160,
   },
   showServicesButton: {
     alignItems: 'center',
-    backgroundColor: '#DC219C',
+    backgroundColor: 'transparent',
+    borderColor: '#6C21DC',
     borderRadius: 5,
+    borderWidth: 2,
     height: 50,
     justifyContent: 'center',
     marginLeft: 10,
-    width: 150,
+    width: 160,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
+    marginTop: 10,
+  },
+  cancelledMessage: {
+    backgroundColor: 'rgba(255, 0, 0, 0.7)',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    padding: 10,
+    alignItems: 'center',
+    top: 0,
+  },
+  cancelledText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  infoIcon: {
+    width: 22,
+    height: 22,
+    marginLeft: 5,
   },
 });

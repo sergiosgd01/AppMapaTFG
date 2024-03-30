@@ -318,121 +318,149 @@ const generateMapMarkers = () => {
     }
   };
 
-return (
-  <View style={{ flex: 1 }}>
-    {isLoading ? (
-      <View style={[styles.spinnerContainer, styles.horizontal]}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    ) : (
-      <View style={{ flex: 1 }}>
-        <View style={{ flex: 0.75 }}>
-          <MapView
-            ref={mapRef}
-            style={{ flex: 1 }}
-            initialRegion={initialRegion}
-          >
-            {generateMapMarkers()}
-            {generateMapPolylines()}
-            {showRoute && (
+  const showAlert = (cancelledInfo) => {
+    if (cancelledInfo === null) {
+      Alert.alert(
+        'Motivo de cancelación',
+        'Aún no se ha proporcionado ningún motivo para la cancelación. Mantente informado para conocer las actualizaciones sobre este tema. Gracias por tu paciencia y comprensión.',
+        [{ text: 'OK' }],
+        { cancelable: false }
+      );
+    } else {
+      Alert.alert(
+        'Motivo de cancelación',
+        cancelledInfo,
+        [{ text: 'OK' }],
+        { cancelable: false }
+      );
+    }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      {isLoading ? (
+        <View style={[styles.spinnerContainer, styles.horizontal]}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      ) : (
+        <View style={{ flex: 1 }}>
+          <View style={{ flex: 0.75 }}>
+            <MapView
+              ref={mapRef}
+              style={{ flex: 1 }}
+              initialRegion={initialRegion}
+            >
+              {generateMapMarkers()}
+              {generateMapPolylines()}
+              {showRoute && (
+                <>
+                  <Polyline
+                    coordinates={routeMarkers.map(marker => ({
+                      latitude: parseFloat(marker.latitude),
+                      longitude: parseFloat(marker.longitude),
+                    }))}
+                    strokeColor="#ff0000"
+                    strokeWidth={4}
+                    lineDashPattern={[5, 10]}
+                  />
+                  {routeMarkers.map((marker, index) => {
+                    // Mostrar marcador solo en la última ubicación
+                    if (index === 0 || index === routeMarkers.length - 1) {
+                      return (
+                        <Marker
+                          key={index}
+                          coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+                          pinColor={index === 0 ? 'green' : 'red'}
+                          onPress={() => {
+                            if (index === 0) {
+                              Alert.alert(
+                                'Punto de partida',
+                                'Este es el punto de partida del recorrido.'
+                              );
+                            } else if (index === routeMarkers.length - 1){
+                              Alert.alert(
+                                'Punto final',
+                                'Este es el punto final del recorrido.'
+                              );
+                            }
+                            else {
+                              return null;
+				    		}
+                          }}
+                        />
+                      );
+                    } else {
+                      return null;
+                    }
+                  })}
+                </>
+              )}
+              {/* Marcadores de los servicios */}
+              {showServices && serviceLocations.map((service, index) => {
+                const icon = getMarkerIcon(service.type);
+                return (
+	  			  <Marker
+                    key={index}
+                    coordinate={{
+                      latitude: parseFloat(service.latitude),
+                      longitude: parseFloat(service.longitude)
+                    }}
+                  >
+                  {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
+                  </Marker>
+                );
+              })}
+            </MapView>
+          </View>
+          <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+            {event.cancelled == 1 && (
+              <View style={styles.cancelledMessage}>
+                <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={styles.cancelledText}>Evento cancelado</Text>
+                    <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+            <Text style={styles.title}>{eventSchedule}</Text>
+            {formattedLastMarkerTime && (
               <>
-                <Polyline
-                  coordinates={routeMarkers.map(marker => ({
-                    latitude: parseFloat(marker.latitude),
-                    longitude: parseFloat(marker.longitude),
-                  }))}
-                  strokeColor="#ff0000"
-                  strokeWidth={4}
-                  lineDashPattern={[5, 10]}
-                />
-                {routeMarkers.map((marker, index) => {
-                  // Mostrar marcador solo en la última ubicación
-                  if (index === 0 || index === routeMarkers.length - 1) {
-                    return (
-                      <Marker
-                        key={index}
-                        coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
-                        pinColor={index === 0 ? 'green' : 'red'}
-                        onPress={() => {
-                          if (index === 0) {
-                            Alert.alert(
-                              'Punto de partida',
-                              'Este es el punto de partida del recorrido.'
-                            );
-                          } else if (index === routeMarkers.length - 1){
-                            Alert.alert(
-                              'Punto final',
-                              'Este es el punto final del recorrido.'
-                            );
-                          }
-                          else {
-                            return null;
-						  }
-                        }}
-                      />
-                    );
-                  } else {
-                    return null;
-                  }
-                })}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+                  <Text>Última actualización: {formattedLastMarkerTime}</Text>
+                 </View>
               </>
             )}
-            {/* Marcadores de los servicios */}
-            {showServices && serviceLocations.map((service, index) => {
-              const icon = getMarkerIcon(service.type);
-              return (
-				<Marker
-                  key={index}
-                  coordinate={{
-                    latitude: parseFloat(service.latitude),
-                    longitude: parseFloat(service.longitude)
-                  }}
-                >
-                  {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
-                </Marker>
-              );
-            })}
-          </MapView>
-        </View>
-        <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
-          <Text style={styles.title}>{eventSchedule}</Text>
-          {formattedLastMarkerTime && (  // Condición para mostrar "Última actualización:"
-            <>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-                <Text>Última actualización: {formattedLastMarkerTime}</Text>
-              </View>
-            </>
-          )}
-          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-            <Picker
-              selectedValue={selectedDorsal}
-              style={{ height: 50, width: 150 }}
-              onValueChange={(itemValue) => setSelectedDorsal(itemValue)}
-            >
-              {allDorsals.map((dorsal, index) => (
-                <Picker.Item key={index} label={dorsal} value={dorsal} />
-              ))}
-            </Picker>
-            <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Image source={reloadIcon} style={styles.imageStyle} />
-                <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
-              </View>
-            </TouchableOpacity>
-		  </View>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
-              <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
-              <Text style={styles.buttonText}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+              <Picker
+                selectedValue={selectedDorsal}
+                style={{ height: 50, width: 160 }}
+                onValueChange={(itemValue) => setSelectedDorsal(itemValue)}
+              >
+                {allDorsals.map((dorsal, index) => (
+                  <Picker.Item key={index} label={dorsal} value={dorsal} />
+                ))}
+              </Picker>
+              <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image source={reloadIcon} style={styles.imageStyle} />
+                  <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
+                </View>
+              </TouchableOpacity>
+		    </View>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
+                <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
+                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
-    )}
-  </View>
-);
+      )}
+    </View>
+  );
 }
 
 MapMultiScreen.propTypes = {
@@ -471,7 +499,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     marginHorizontal: 5,
-    width: 150,
+    width: 160,
   },
   horizontal: {
     flexDirection: "row",
@@ -509,16 +537,18 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     marginRight: 10,
-    width: 150,
+    width: 160,
   },
   showServicesButton: {
-    alignItems: 'center',
-    backgroundColor: '#DC219C',
+	alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderColor: '#6C21DC',
     borderRadius: 5,
+    borderWidth: 2,
     height: 50,
     justifyContent: 'center',
     marginLeft: 10,
-    width: 150,
+    width: 160,
   },
   spinnerContainer: {
     flex: 1,
@@ -527,5 +557,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  cancelledMessage: {
+    backgroundColor: 'rgba(255, 0, 0, 0.7)',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    padding: 10,
+    alignItems: 'center',
+    top: 0,
+  },
+  cancelledText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  infoIcon: {
+    width: 22,
+    height: 22,
+    marginLeft: 5,
   },
 });

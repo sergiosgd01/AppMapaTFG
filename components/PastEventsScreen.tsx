@@ -56,6 +56,12 @@ export default function PastEventsScreen({ route, navigation }) {
       <View style={styles.eventDetails}>
         <Image source={{ uri: item.image }} style={styles.eventImage} />
         <View style={{ flex: 1 }}>
+          {item.cancelled == 1 && (
+            <View style={styles.cancelledMessage}>
+              <Text style={styles.cancelledText}>Evento cancelado</Text>
+              <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
+            </View>
+          )}
           <Text numberOfLines={1} ellipsizeMode="tail" style={styles.eventName}>{item.name}</Text>
           <Text style={styles.eventDateTime}>
             {`Fecha de inicio: ${formatDateTime(item.startDate)}`}
@@ -207,5 +213,28 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  cancelledMessage: {
+    backgroundColor: 'rgba(255, 0, 0, 0.7)',
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ translateY: -25 }],
+    flexDirection: 'row', alignItems: 'center'
+  },
+  cancelledText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  infoIcon: {
+    width: 22,
+    height: 22,
+    marginLeft: 5,
   },
 });
