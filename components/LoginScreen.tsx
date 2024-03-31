@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 16,
   },
   checkbox: {
     alignSelf: 'center',
@@ -158,6 +159,7 @@ const styles = StyleSheet.create({
     color: '#6C21DC',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 16,
   },
   errorMessage: {
     color: 'red',
@@ -189,6 +191,7 @@ const styles = StyleSheet.create({
     color: '#DC219C',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 16,
   },
   title: {
     fontSize: 24,

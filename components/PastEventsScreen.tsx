@@ -62,13 +62,15 @@ export default function PastEventsScreen({ route, navigation }) {
               <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
             </View>
           )}
-          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.eventName}>{item.name}</Text>
-          <Text style={styles.eventDateTime}>
-            {`Fecha de inicio: ${formatDateTime(item.startDate)}`}
-          </Text>
-          <Text style={styles.eventDateTime}>
-            {`Fecha de fin: ${formatDateTime(item.endDate)}`}
-          </Text>
+          <View style={styles.eventInfoContainer}>
+            <Text numberOfLines={1} ellipsizeMode="tail" style={styles.eventName}>{item.name}</Text>
+            <Text style={styles.eventDateTime}>
+              {`Fecha de inicio: ${formatDateTime(item.startDate)}`}
+            </Text>
+            <Text style={styles.eventDateTime}>
+              {`Fecha de fin: ${formatDateTime(item.endDate)}`}
+            </Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -141,6 +143,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
+  eventInfoContainer: {
+    flex: 1,
+  },
   eventImage: {
     borderRadius: 10,
     height: 100,
@@ -155,6 +160,8 @@ const styles = StyleSheet.create({
   eventName: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 5,
+    top: 0,
   },
   header: {
     alignItems: 'center',

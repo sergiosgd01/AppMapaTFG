@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 16,
   },
   checkbox: {
     alignSelf: 'center',
