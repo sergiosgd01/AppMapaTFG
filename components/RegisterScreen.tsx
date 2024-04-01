@@ -5,6 +5,7 @@ import provincias from '../provincias';
 import CheckBox from '@react-native-community/checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PropTypes from 'prop-types';
+import styles from '../styles/RegisterScreenStyles';
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -16,33 +17,28 @@ export default function RegisterScreen({ navigation }) {
   const [error, setError] = useState('');
 
   const handleRegister = () => {
-    // Validar que se hayan ingresado todos los campos
     if (!username || !email || !password || !selectedProvince) {
       setError('Por favor, complete todos los campos');
       return;
     }
 
-    // Validar las contraseñas iguales
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
     }
 
-    // Validar el formato del correo electrónico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Por favor, ingrese un correo electrónico válido');
       return;
     }
 
-    // Validar el formato de la contraseña
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/;
     if (!passwordRegex.test(password)) {
       setError('La contraseña debe tener entre 6 y 20 caracteres, al menos una mayúscula, una minúscula y un número');
       return;
     }
 
-    // Validar si el correo electrónico ya está registrado
     fetch('https://pruebaproyectouex.000webhostapp.com/proyectoTFG/verificar_email.php', {
       method: 'POST',
       headers: {
@@ -170,55 +166,3 @@ export default function RegisterScreen({ navigation }) {
 RegisterScreen.propTypes = {
   navigation: PropTypes.object.isRequired,
 };
-
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: '#6C21DC',
-    borderRadius: 5,
-    marginTop: 10,
-    padding: 10,
-    width: '100%',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 16,
-  },
-  checkbox: {
-    alignSelf: 'center',
-  },
-  checkboxContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  container: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  errorMessage: {
-    color: 'red',
-    marginBottom: 10,
-  },
-  input: {
-    borderColor: '#ccc',
-    borderRadius: 5,
-    borderWidth: 1,
-    height: 40,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    width: '100%',
-  },
-  label: {
-    color: 'black',
-    margin: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-});

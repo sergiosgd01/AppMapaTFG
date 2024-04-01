@@ -8,6 +8,7 @@ import reloadIcon from '../assets/iconReload.png';
 import iconBañoPublico from '../assets/iconBañoPublico.png';
 import iconPrimerosAuxilios from '../assets/iconPrimerosAuxilios.png';
 import iconPuntoVioleta from '../assets/iconPuntoVioleta.png';
+import styles from '../styles/MapMultiScreenStyles';
 
 // Componente personalizado para el marcador con el número de dorsal dentro de un círculo
 const CustomMarker = ({ coordinate, dorsal, color, name, onPress }) => (
@@ -68,10 +69,9 @@ export default function MapMultiScreen({ route, navigation }) {
   }, []);
 
   useEffect(() => {
-    // Centrar el mapa en la ubicación del dorsal seleccionado
     if (userLocations.length > 0) {
       if (selectedDorsal === allOption) {
-        // Mostrar la última ubicación recibida de todos los dorsales
+        // Muestra la última ubicación recibida de todos los dorsales
         const lastLocation = userLocations[userLocations.length - 1];
         mapRef.current.animateToRegion({
           latitude: parseFloat(lastLocation.latitude),
@@ -80,10 +80,10 @@ export default function MapMultiScreen({ route, navigation }) {
           longitudeDelta: 0.05,
         }, 1000);
       } else {
-        // Mostrar la ubicación del dorsal seleccionado
+        // Muestra la ubicación del dorsal seleccionado
         const selectedLocations = userLocations.filter(location => location.dorsal === selectedDorsal);
-        const lastLocation = selectedLocations[selectedLocations.length - 1]; // Cambio aquí
-        if (lastLocation) { // Añadir este control para evitar errores si no hay ubicaciones para el dorsal seleccionado
+        const lastLocation = selectedLocations[selectedLocations.length - 1];
+        if (lastLocation) {
           mapRef.current.animateToRegion({
             latitude: parseFloat(lastLocation.latitude),
             longitude: parseFloat(lastLocation.longitude),
@@ -102,19 +102,16 @@ export default function MapMultiScreen({ route, navigation }) {
       setUserLocations(markers);
       if (markers.length > 0) {
         setFormattedLastMarkerTime(markers[markers.length - 1].timestamp);
-        // Actualizar la región inicial solo si no está definida
         if (!initialRegion) {
           setInitialRegion(calculateInitialRegion(markers));
         }
       } else {
         const province = provincias[event.province];
         if (province) {
-          // Actualizar la región inicial solo si no está definida
           if (!initialRegion) {
             setInitialRegion(calculateInitialRegion([], province.lat, province.lng));
           }
         } else {
-          // Actualizar la región inicial solo si no está definida
           if (!initialRegion) {
             setInitialRegion(calculateInitialRegion([], 40.4168, -3.7038));
           }
@@ -215,7 +212,7 @@ export default function MapMultiScreen({ route, navigation }) {
 
 const generateMapMarkers = () => {
   if (selectedDorsal && selectedDorsal !== allOption) {
-    // Mostrar ubicaciones del dorsal seleccionado
+    // Muestra ubicaciones del dorsal seleccionado
     const dorsalLocations = userLocations.filter(location => location.dorsal === selectedDorsal);
     const latestLocation = dorsalLocations[dorsalLocations.length - 1];
     if (latestLocation) {
@@ -241,7 +238,7 @@ const generateMapMarkers = () => {
       return null;
     }
   } else {
-    // Mostrar solo la última ubicación de cada dorsal
+    // Muestra solo la última ubicación de cada dorsal
     const uniqueDorsals = [...new Set(userLocations.map(location => location.dorsal))];
     const markers = uniqueDorsals.map(dorsal => {
       const dorsalLocations = userLocations.filter(location => location.dorsal === dorsal);
@@ -261,7 +258,7 @@ const generateMapMarkers = () => {
       }
     });
 
-    // Calcula el centro del mapa en base a la última ubicación de todas las dorsales
+    // Calcula el centro del mapa con la última ubicación de todas las dorsales
     const latestLocations = userLocations.filter(location => uniqueDorsals.includes(location.dorsal));
     const latestOverallLocation = latestLocations[latestLocations.length - 1];
     if (latestOverallLocation) {
@@ -282,7 +279,6 @@ const generateMapMarkers = () => {
     setSelectedDorsal(dorsal);
   };
 
-  // Obtener las polilíneas según la selección del usuario
   const generateMapPolylines = () => {
     const mapPolylines = [];
 
@@ -364,7 +360,7 @@ const generateMapMarkers = () => {
                     lineDashPattern={[5, 10]}
                   />
                   {routeMarkers.map((marker, index) => {
-                    // Mostrar marcador solo en la última ubicación
+                    // Muestra marcador solo de la última ubicación
                     if (index === 0 || index === routeMarkers.length - 1) {
                       return (
                         <Marker
@@ -412,7 +408,7 @@ const generateMapMarkers = () => {
               })}
             </MapView>
           </View>
-          <View style={{ flex: 0.20, justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+          <View style={styles.container}>
             {event.cancelled == 1 && (
               <View style={styles.cancelledMessage}>
                 <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
@@ -423,18 +419,26 @@ const generateMapMarkers = () => {
                 </TouchableOpacity>
               </View>
             )}
-            <Text style={styles.title}>{eventSchedule}</Text>
-            {formattedLastMarkerTime && (
-              <>
+            <View style={styles.header}>
+              <Text style={styles.title}>{eventSchedule}</Text>
+              {formattedLastMarkerTime && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
                   <Text>Última actualización: {formattedLastMarkerTime}</Text>
-                 </View>
-              </>
-            )}
-            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                </View>
+              )}
+            </View>
+            <View style={styles.containerShow}>
+			  <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
+                <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
+                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
+              </TouchableOpacity>
+			</View>
+			<View style={styles.containerPickerUpdate}>
               <Picker
                 selectedValue={selectedDorsal}
-                style={{ height: 50, width: 160 }}
+                style={styles.commonButton}
                 onValueChange={(itemValue) => setSelectedDorsal(itemValue)}
               >
                 {allDorsals.map((dorsal, index) => (
@@ -442,20 +446,12 @@ const generateMapMarkers = () => {
                 ))}
               </Picker>
               <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
                   <Image source={reloadIcon} style={styles.imageStyle} />
                   <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
                 </View>
               </TouchableOpacity>
 		    </View>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
-                <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
-                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
       )}
@@ -467,115 +463,3 @@ MapMultiScreen.propTypes = {
   route: PropTypes.object.isRequired,
   navigation: PropTypes.object.isRequired,
 };
-
-const styles = StyleSheet.create({
-  activeButton: {
-    opacity: 0.8,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
-    marginTop: 10,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  calloutContainer: {
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    justifyContent: 'center',
-    padding: 10,
-    width: 100,
-  },
-  calloutText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  commonButton: {
-    alignItems: 'center',
-    height: 50,
-    justifyContent: 'center',
-    marginHorizontal: 5,
-    width: 160,
-  },
-  horizontal: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 10
-  },
-  imageStyle: {
-    height: 20,
-    marginRight: 5,
-    width: 20,
-  },
-  marker: {
-    alignItems: 'center',
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: 40,
-  },
-  markerContainer: {
-    alignItems: 'center',
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
-  },
-  markerText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  showRouteButton: {
-    alignItems: 'center',
-    backgroundColor: '#6C21DC',
-    borderRadius: 5,
-    height: 50,
-    justifyContent: 'center',
-    marginRight: 10,
-    width: 160,
-  },
-  showServicesButton: {
-	alignItems: 'center',
-    backgroundColor: 'transparent',
-    borderColor: '#6C21DC',
-    borderRadius: 5,
-    borderWidth: 2,
-    height: 50,
-    justifyContent: 'center',
-    marginLeft: 10,
-    width: 160,
-  },
-  spinnerContainer: {
-    flex: 1,
-    justifyContent: "center"
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  cancelledMessage: {
-    backgroundColor: 'rgba(255, 0, 0, 0.7)',
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 1,
-    padding: 10,
-    alignItems: 'center',
-    top: 0,
-  },
-  cancelledText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  infoIcon: {
-    width: 22,
-    height: 22,
-    marginLeft: 5,
-  },
-});
