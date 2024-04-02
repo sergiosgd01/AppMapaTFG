@@ -92,15 +92,15 @@ const PastEventsScreenStyles = {
   cancelledMessage: {
     backgroundColor: 'rgba(255, 0, 0, 0.7)',
     position: 'absolute',
-    top: '50%',
     left: 0,
     right: 0,
     zIndex: 1,
     padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateY: -25 }],
-    flexDirection: 'row', alignItems: 'center'
+    flexDirection: 'row',
+    bottom: 0,
+    marginBottom: 10,
   },
   cancelledText: {
     color: '#ffffff',

@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Image, View, Text, TouchableOpacity } from 'react-native'; // Añade View, Text y TouchableOpacity aquí
+import { Image, View, Text, TouchableOpacity } from 'react-native';
 import LoginScreen from './components/LoginScreen';
 import RegisterScreen from './components/RegisterScreen';
 import LiveEventsScreen from './components/LiveEventsScreen';

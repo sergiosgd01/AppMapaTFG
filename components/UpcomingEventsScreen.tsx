@@ -59,19 +59,19 @@ export default function UpcomingEventsScreen({ route }) {
       <View style={styles.eventDetails}>
         <Image source={{ uri: item.image }} style={styles.eventImage} />
         <View style={{ flex: 1 }}>
-          {item.cancelled == 1 && (
-            <View style={styles.cancelledMessage}>
-              <Text style={styles.cancelledText}>Evento cancelado</Text>
-              <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
-            </View>
-          )}
           <View style={styles.eventInfoContainer}>
-            <Text numberOfLines={1} ellipsizeMode="tail" style={styles.eventName}>{item.name}</Text>
+            <Text numberOfLines={2} ellipsizeMode="tail" style={styles.eventName}>{item.name}</Text>
+            {item.cancelled == 1 && (
+              <View style={styles.cancelledMessage}>
+                <Text style={styles.cancelledText}>Evento cancelado</Text>
+                <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
+              </View>
+            )}
             <Text style={styles.eventDateTime}>
-              {`Fecha de inicio: ${formatDateTime(item.startDate)}`}
+              {`Inicio: ${formatDateTime(item.startDate)}`}
             </Text>
             <Text style={styles.eventDateTime}>
-              {`Fecha de fin: ${formatDateTime(item.endDate)}`}
+              {`Fin: ${formatDateTime(item.endDate)}`}
             </Text>
           </View>
         </View>
@@ -109,10 +109,10 @@ export default function UpcomingEventsScreen({ route }) {
         </Picker>
       </View>
       {loading ? (
-              <ActivityIndicator size="large" color="#000000" style={styles.spinner} />
+        <ActivityIndicator size="large" color="#000000" style={styles.spinner} />
       ) : (
         <>
-          {events.length === 0 && (
+          {filterUpcomingEvents().length == 0 && (
             <View style={styles.noEventsMessage}>
               <Text style={styles.noEventsText}>No hay eventos futuros en {selectedProvince}</Text>
             </View>
