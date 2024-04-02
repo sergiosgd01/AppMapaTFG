@@ -1,23 +1,27 @@
 const MapScreenStyles = {
   container: {
-    flex: 0.25,
+    height: 150,
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    bottom: 0,
   },
   header: {
+    flex: 1,
 	alignItems: 'center',
 	top: 0,
-	backgroundColor: 'red',
+	justifyContent: 'center',
   },
   containerShow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'blue',
+    justifyContent: 'center',
   },
   containerImproveUpdate: {
+    flex: 1,
 	flexDirection: 'row',
 	bottom: 0,
-	backgroundColor: 'green',
+	justifyContent: 'center',
+	alignItems: 'center',
   },
   activeButton: {
     opacity: 0.8,
@@ -28,10 +32,10 @@ const MapScreenStyles = {
   },
   commonButton: {
     alignItems: 'center',
-    height: '65%',
-    justifyContent: 'center',
+    height: 40,
     marginHorizontal: 5,
-    width: '45%',
+    width: 160,
+    justifyContent: 'center',
   },
   imageStyle: {
     height: 20,
@@ -40,10 +44,9 @@ const MapScreenStyles = {
   },
   improveLocationButton: {
     alignItems: 'center',
-    height: '65%',
+    height: 40,
+    width: 160,
     justifyContent: 'center',
-    marginTop: 5,
-    width: '45%',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -54,10 +57,10 @@ const MapScreenStyles = {
     alignItems: 'center',
     backgroundColor: '#6C21DC',
     borderRadius: 5,
-    height: '65%',
+    height: 40,
     justifyContent: 'center',
     marginRight: 10,
-    width: '40%',
+    width: 160,
   },
   showServicesButton: {
     alignItems: 'center',
@@ -65,10 +68,10 @@ const MapScreenStyles = {
     borderColor: '#6C21DC',
     borderRadius: 5,
     borderWidth: 2,
-    height: '65%',
+    height: 40,
     justifyContent: 'center',
     marginLeft: 10,
-    width: '40%',
+    width: 160,
   },
   title: {
     fontSize: 20,
@@ -83,6 +86,7 @@ const MapScreenStyles = {
     padding: 10,
     alignItems: 'center',
     top: 0,
+    height: 50,
   },
   cancelledText: {
     color: '#ffffff',

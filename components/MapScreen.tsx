@@ -244,7 +244,7 @@ export default function MapScreen({ route, navigation }) {
   const correctedLocationMarkers = improveLocation ? getNearestRouteLocations(locationMarkers, routeMarkers) : locationMarkers;
 
   const showAlert = (cancelledInfo) => {
-    if (cancelledInfo === null) {
+    if (cancelledInfo == '' || cancelledInfo == null) {
       Alert.alert(
         'Motivo de cancelación',
         'Aún no se ha proporcionado ningún motivo para la cancelación. Mantente informado para conocer las actualizaciones sobre este tema. Gracias por tu paciencia y comprensión.',
@@ -269,131 +269,129 @@ export default function MapScreen({ route, navigation }) {
         </View>
       ) : (
         <View style={{ flex: 1 }}>
-          <View style={{ flex: 0.75 }}>
-            <MapView
-              ref={mapViewRef}
-              style={{ flex: 1 }}
-              initialRegion={initialRegion}
-            >
-              {/* Marcadores de ubicaciones */}
-              {locationMarkers.map((marker, index) => {
-                if (index === locationMarkers.length - 1) {
+              <MapView
+                ref={mapViewRef}
+                style={{ flex: 1 }}
+                initialRegion={initialRegion}
+              >
+                {/* Marcadores de ubicaciones */}
+                {locationMarkers.map((marker, index) => {
+                  if (index === locationMarkers.length - 1) {
+                    return (
+                      <Marker
+                        key={index}
+                        coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+                        pinColor={'blue'}
+                      />
+                    );
+                  } else {
+                    return null;
+                  }
+                })}
+                <Polyline
+                  coordinates={locationPolylineCoordinates}
+                  strokeColor="#3388ff"
+                  strokeWidth={5}
+                />
+                {showRoute && (
+                  <>
+                    <Polyline
+                      coordinates={routePolylineCoordinates}
+                      strokeColor="#ff0000"
+                      strokeWidth={4}
+                      lineDashPattern={[5, 10]}
+                    />
+                    {routeMarkers.map((marker, index) => {
+                      if (index === 0 || index === routeMarkers.length - 1) {
+                        return (
+                          <Marker
+                            key={index}
+                            coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+                            pinColor={index === 0 ? 'green' : 'red'}
+                            onPress={() => {
+                              if (index === 0) {
+                                Alert.alert(
+                                  'Punto de partida',
+                                  'Este es el punto de partida del recorrido.'
+                                );
+                              } else if (index === routeMarkers.length - 1) {
+                                Alert.alert(
+                                  'Punto final',
+                                  'Este es el punto final del recorrido.'
+                                );
+                              }
+                            }}
+                          />
+                        );
+                      } else {
+                        return null;
+                      }
+                    })}
+                  </>
+                )}
+                {/* Marcadores de los servicios */}
+                {showServices && serviceLocations.map((service, index) => {
+                  const icon = getMarkerIcon(service.type);
                   return (
                     <Marker
                       key={index}
-                      coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
-                      pinColor={'blue'}
-                    />
+                        coordinate={{
+                        latitude: parseFloat(service.latitude),
+                        longitude: parseFloat(service.longitude)
+                      }}
+                    >
+                      {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
+                    </Marker>
                   );
-                } else {
-                  return null;
-                }
-              })}
-              <Polyline
-                coordinates={locationPolylineCoordinates}
-                strokeColor="#3388ff"
-                strokeWidth={5}
-              />
-              {showRoute && (
-                <>
-                  <Polyline
-                    coordinates={routePolylineCoordinates}
-                    strokeColor="#ff0000"
-                    strokeWidth={4}
-                    lineDashPattern={[5, 10]}
-                  />
-                  {routeMarkers.map((marker, index) => {
-                    if (index === 0 || index === routeMarkers.length - 1) {
-                      return (
-                        <Marker
-                          key={index}
-                          coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
-                          pinColor={index === 0 ? 'green' : 'red'}
-                          onPress={() => {
-                            if (index === 0) {
-                              Alert.alert(
-                                'Punto de partida',
-                                'Este es el punto de partida del recorrido.'
-                              );
-                            } else if (index === routeMarkers.length - 1) {
-                              Alert.alert(
-                                'Punto final',
-                                'Este es el punto final del recorrido.'
-                              );
-                            }
-                          }}
-                        />
-                      );
-                    } else {
-                      return null;
-                    }
-                  })}
-                </>
+                })}
+              </MapView>
+            <View style={styles.container}>
+              {event.cancelled == 1 && (
+                <View style={styles.cancelledMessage}>
+                  <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.cancelledText}>Evento cancelado</Text>
+                      <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
               )}
-              {/* Marcadores de los servicios */}
-              {showServices && serviceLocations.map((service, index) => {
-                const icon = getMarkerIcon(service.type);
-                return (
-                  <Marker
-                    key={index}
-                      coordinate={{
-                      latitude: parseFloat(service.latitude),
-                      longitude: parseFloat(service.longitude)
-                    }}
-                  >
-                    {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
-                  </Marker>
-                );
-              })}
-            </MapView>
-          </View>
-          <View style={styles.container}>
-            {event.cancelled == 1 && (
-              <View style={styles.cancelledMessage}>
-                <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
+              <View style={styles.header}>
+                <Text style={styles.title}>{eventSchedule}</Text>
+                {formattedLastLocationMarkerTime && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 0 }}>
+                    <Text>Última actualización: {formattedLastLocationMarkerTime}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.containerShow}>
+                <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
+                  <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
+                  <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.containerImproveUpdate}>
+                <TouchableOpacity style={[styles.commonButton, styles.improveLocationButton]} onPress={() => setImproveLocation(!improveLocation)}>
+                  <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+                    <Text style={[styles.buttonText, {color: '#333'}]}>Mejorar Ubicación</Text>
+                    <Switch onValueChange={() => setImproveLocation(!improveLocation)} value={improveLocation} />
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={styles.cancelledText}>Evento cancelado</Text>
-                    <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
+                    <Image source={reloadIcon} style={styles.imageStyle} />
+                    <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
                   </View>
                 </TouchableOpacity>
               </View>
-            )}
-            <View style={styles.header}>
-              <Text style={styles.title}>{eventSchedule}</Text>
-              {formattedLastLocationMarkerTime && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-                  <Text>Última actualización: {formattedLastLocationMarkerTime}</Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.containerShow}>
-              <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
-                <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
-                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.containerImproveUpdate}>
-              <TouchableOpacity style={[styles.commonButton, styles.improveLocationButton]} onPress={() => setImproveLocation(!improveLocation)}>
-                <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-                  <Text style={[styles.buttonText, {color: '#333'}]}>Mejorar Ubicación</Text>
-                  <Switch onValueChange={() => setImproveLocation(!improveLocation)} value={improveLocation} />
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image source={reloadIcon} style={styles.imageStyle} />
-                  <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
-                </View>
-              </TouchableOpacity>
             </View>
           </View>
-        </View>
-      )}
-    </View>
-  );
-}
+        )}
+      </View>
+    );
+  }
 
 MapScreen.propTypes = {
   route: PropTypes.object.isRequired,

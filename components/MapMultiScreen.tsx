@@ -210,70 +210,70 @@ export default function MapMultiScreen({ route, navigation }) {
     return `${date.getHours()}:${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
   };
 
-const generateMapMarkers = () => {
-  if (selectedDorsal && selectedDorsal !== allOption) {
-    // Muestra ubicaciones del dorsal seleccionado
-    const dorsalLocations = userLocations.filter(location => location.dorsal === selectedDorsal);
-    const latestLocation = dorsalLocations[dorsalLocations.length - 1];
-    if (latestLocation) {
-      const region = {
-        latitude: parseFloat(latestLocation.latitude),
-        longitude: parseFloat(latestLocation.longitude),
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      };
-      mapRef.current.animateToRegion(region, 1000);
-
-      return (
-        <CustomMarker
-          key={selectedDorsal}
-          coordinate={{ latitude: parseFloat(latestLocation.latitude), longitude: parseFloat(latestLocation.longitude) }}
-          dorsal={selectedDorsal}
-          color={latestLocation.color}
-          name={latestLocation.name}
-          onPress={() => handleMarkerPress(selectedDorsal)}
-        />
-      );
-    } else {
-      return null;
-    }
-  } else {
-    // Muestra solo la última ubicación de cada dorsal
-    const uniqueDorsals = [...new Set(userLocations.map(location => location.dorsal))];
-    const markers = uniqueDorsals.map(dorsal => {
-      const dorsalLocations = userLocations.filter(location => location.dorsal === dorsal);
+  const generateMapMarkers = () => {
+    if (selectedDorsal && selectedDorsal !== allOption) {
+      // Muestra ubicaciones del dorsal seleccionado
+      const dorsalLocations = userLocations.filter(location => location.dorsal === selectedDorsal);
       const latestLocation = dorsalLocations[dorsalLocations.length - 1];
       if (latestLocation) {
+        const region = {
+          latitude: parseFloat(latestLocation.latitude),
+          longitude: parseFloat(latestLocation.longitude),
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        };
+        mapRef.current.animateToRegion(region, 1000);
+
         return (
           <CustomMarker
-            key={dorsal}
+            key={selectedDorsal}
             coordinate={{ latitude: parseFloat(latestLocation.latitude), longitude: parseFloat(latestLocation.longitude) }}
-            dorsal={dorsal}
+            dorsal={selectedDorsal}
             color={latestLocation.color}
-            onPress={() => handleMarkerPress(dorsal)}
+            name={latestLocation.name}
+            onPress={() => handleMarkerPress(selectedDorsal)}
           />
         );
       } else {
         return null;
       }
-    });
+    } else {
+      // Muestra solo la última ubicación de cada dorsal
+      const uniqueDorsals = [...new Set(userLocations.map(location => location.dorsal))];
+      const markers = uniqueDorsals.map(dorsal => {
+        const dorsalLocations = userLocations.filter(location => location.dorsal === dorsal);
+        const latestLocation = dorsalLocations[dorsalLocations.length - 1];
+        if (latestLocation) {
+          return (
+            <CustomMarker
+              key={dorsal}
+              coordinate={{ latitude: parseFloat(latestLocation.latitude), longitude: parseFloat(latestLocation.longitude) }}
+              dorsal={dorsal}
+              color={latestLocation.color}
+              onPress={() => handleMarkerPress(dorsal)}
+            />
+          );
+        } else {
+          return null;
+        }
+      });
 
-    // Calcula el centro del mapa con la última ubicación de todas las dorsales
-    const latestLocations = userLocations.filter(location => uniqueDorsals.includes(location.dorsal));
-    const latestOverallLocation = latestLocations[latestLocations.length - 1];
-    if (latestOverallLocation) {
-      const region = {
-        latitude: parseFloat(latestOverallLocation.latitude),
-        longitude: parseFloat(latestOverallLocation.longitude),
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      };
-      mapRef.current.animateToRegion(region, 1000);
+      // Calcula el centro del mapa con la última ubicación de todas las dorsales
+      const latestLocations = userLocations.filter(location => uniqueDorsals.includes(location.dorsal));
+      const latestOverallLocation = latestLocations[latestLocations.length - 1];
+      if (latestOverallLocation) {
+        const region = {
+          latitude: parseFloat(latestOverallLocation.latitude),
+          longitude: parseFloat(latestOverallLocation.longitude),
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        };
+        mapRef.current.animateToRegion(region, 1000);
+      }
+
+      return markers;
     }
-
-    return markers;
-  }
-};
+  };
 
   const handleMarkerPress = (dorsal) => {
     setSelectedDorsal(dorsal);
@@ -315,7 +315,7 @@ const generateMapMarkers = () => {
   };
 
   const showAlert = (cancelledInfo) => {
-    if (cancelledInfo === null) {
+    if (cancelledInfo == '' || cancelledInfo == null) {
       Alert.alert(
         'Motivo de cancelación',
         'Aún no se ha proporcionado ningún motivo para la cancelación. Mantente informado para conocer las actualizaciones sobre este tema. Gracias por tu paciencia y comprensión.',
@@ -340,74 +340,72 @@ const generateMapMarkers = () => {
         </View>
       ) : (
         <View style={{ flex: 1 }}>
-          <View style={{ flex: 0.75 }}>
-            <MapView
-              ref={mapRef}
-              style={{ flex: 1 }}
-              initialRegion={initialRegion}
-            >
-              {generateMapMarkers()}
-              {generateMapPolylines()}
-              {showRoute && (
-                <>
-                  <Polyline
-                    coordinates={routeMarkers.map(marker => ({
-                      latitude: parseFloat(marker.latitude),
-                      longitude: parseFloat(marker.longitude),
-                    }))}
-                    strokeColor="#ff0000"
-                    strokeWidth={4}
-                    lineDashPattern={[5, 10]}
-                  />
-                  {routeMarkers.map((marker, index) => {
-                    // Muestra marcador solo de la última ubicación
-                    if (index === 0 || index === routeMarkers.length - 1) {
-                      return (
-                        <Marker
-                          key={index}
-                          coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
-                          pinColor={index === 0 ? 'green' : 'red'}
-                          onPress={() => {
-                            if (index === 0) {
-                              Alert.alert(
-                                'Punto de partida',
-                                'Este es el punto de partida del recorrido.'
-                              );
-                            } else if (index === routeMarkers.length - 1){
-                              Alert.alert(
-                                'Punto final',
-                                'Este es el punto final del recorrido.'
-                              );
-                            }
-                            else {
-                              return null;
-				    		}
-                          }}
-                        />
-                      );
-                    } else {
-                      return null;
-                    }
-                  })}
-                </>
-              )}
-              {/* Marcadores de los servicios */}
-              {showServices && serviceLocations.map((service, index) => {
-                const icon = getMarkerIcon(service.type);
-                return (
-	  			  <Marker
-                    key={index}
-                    coordinate={{
-                      latitude: parseFloat(service.latitude),
-                      longitude: parseFloat(service.longitude)
-                    }}
-                  >
-                  {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
-                  </Marker>
-                );
-              })}
-            </MapView>
-          </View>
+          <MapView
+            ref={mapRef}
+            style={{ flex: 1 }}
+            initialRegion={initialRegion}
+          >
+            {generateMapMarkers()}
+            {generateMapPolylines()}
+            {showRoute && (
+              <>
+                <Polyline
+                  coordinates={routeMarkers.map(marker => ({
+                    latitude: parseFloat(marker.latitude),
+                    longitude: parseFloat(marker.longitude),
+                  }))}
+                  strokeColor="#ff0000"
+                  strokeWidth={4}
+                  lineDashPattern={[5, 10]}
+                />
+                {routeMarkers.map((marker, index) => {
+                  // Muestra marcador solo de la última ubicación
+                  if (index === 0 || index === routeMarkers.length - 1) {
+                    return (
+                      <Marker
+                        key={index}
+                        coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+                        pinColor={index === 0 ? 'green' : 'red'}
+                        onPress={() => {
+                          if (index === 0) {
+                            Alert.alert(
+                              'Punto de partida',
+                              'Este es el punto de partida del recorrido.'
+                            );
+                          } else if (index === routeMarkers.length - 1){
+                            Alert.alert(
+                              'Punto final',
+                              'Este es el punto final del recorrido.'
+                            );
+                          }
+                          else {
+                            return null;
+		    		      }
+                        }}
+                      />
+                    );
+                  } else {
+                    return null;
+                  }
+                })}
+              </>
+            )}
+            {/* Marcadores de los servicios */}
+            {showServices && serviceLocations.map((service, index) => {
+              const icon = getMarkerIcon(service.type);
+              return (
+        	    <Marker
+                  key={index}
+                  coordinate={{
+                    latitude: parseFloat(service.latitude),
+                    longitude: parseFloat(service.longitude)
+                  }}
+                >
+                {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
+                </Marker>
+              );
+            })}
+          </MapView>
           <View style={styles.container}>
             {event.cancelled == 1 && (
               <View style={styles.cancelledMessage}>
@@ -428,14 +426,14 @@ const generateMapMarkers = () => {
               )}
             </View>
             <View style={styles.containerShow}>
-			  <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
+       	      <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
                 <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
                 <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
               </TouchableOpacity>
-			</View>
-			<View style={styles.containerPickerUpdate}>
+	        </View>
+	        <View style={styles.containerPickerUpdate}>
               <Picker
                 selectedValue={selectedDorsal}
                 style={styles.commonButton}
@@ -446,12 +444,12 @@ const generateMapMarkers = () => {
                 ))}
               </Picker>
               <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Image source={reloadIcon} style={styles.imageStyle} />
                   <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
                 </View>
               </TouchableOpacity>
-		    </View>
+            </View>
           </View>
         </View>
       )}
