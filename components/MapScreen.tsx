@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Switch, Alert, Image } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import provincias from '../provincias';
+import provincias from '../utils/provincias';
 import PropTypes from 'prop-types';
 import reloadIcon from '../assets/iconReload.png';
 import iconBañoPublico from '../assets/iconBañoPublico.png';

@@ -39,17 +39,12 @@ const UpcomingEventsScreenStyles = {
   },
   noEventsMessage: {
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 50,
   },
   noEventsText: {
     color: '#666',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  picker: {
-    height: 40,
-    marginBottom: 10,
-    width: '40%',
   },
   searchInput: {
     borderColor: 'gray',
@@ -57,7 +52,8 @@ const UpcomingEventsScreenStyles = {
     height: 40,
     marginBottom: 10,
     paddingHorizontal: 10,
-    width: '60%',
+    width: '100%',
+    marginTop: 20,
   },
   spinner: {
     alignItems: 'center',

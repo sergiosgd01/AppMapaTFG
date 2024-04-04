@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, ActivityIndicator } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { format } from 'date-fns';
-import provincias from '../provincias';
 import PropTypes from 'prop-types';
 import styles from '../styles/PastEventsScreenStyles';
+import * as variables from '../utils/variables';
 
 export default function PastEventsScreen({ route, navigation }) {
   const user = route.params && route.params.user;
-
-  const [selectedProvince, setSelectedProvince] = useState(user ? user.province : 'Álava');
   const [events, setEvents] = useState([]);
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,11 +20,11 @@ export default function PastEventsScreen({ route, navigation }) {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [selectedProvince]);
+  }, []);
 
   const fetchEvents = () => {
     setLoading(true);
-    fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_events_province.php?province=${encodeURIComponent(selectedProvince)}`)
+    fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_events_organization.php?organizationCode=${encodeURIComponent(variables.organizationCode)}`)
       .then(response => response.json())
       .then(data => {
         setEvents(data);
@@ -96,15 +93,6 @@ export default function PastEventsScreen({ route, navigation }) {
           onChangeText={setSearchTerm}
           value={searchTerm}
         />
-        <Picker
-          selectedValue={selectedProvince}
-          style={styles.picker}
-          onValueChange={(itemValue) => setSelectedProvince(itemValue)}
-        >
-          {Object.keys(provincias).map((provincia) => (
-            <Picker.Item key={provincia} label={provincia} value={provincia} />
-          ))}
-        </Picker>
       </View>
       {loading ? (
         <ActivityIndicator size="large" color="#000000" style={styles.spinner} />
@@ -112,7 +100,7 @@ export default function PastEventsScreen({ route, navigation }) {
         <>
           {filterPastEvents().length === 0 && (
             <View style={styles.noEventsMessage}>
-              <Text style={styles.noEventsText}>No hay eventos pasados en {selectedProvince}</Text>
+              <Text style={styles.noEventsText}>No hay eventos pasados</Text>
             </View>
           )}
           <FlatList

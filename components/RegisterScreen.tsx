@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import provincias from '../provincias';
 import CheckBox from '@react-native-community/checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PropTypes from 'prop-types';
@@ -12,12 +10,11 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [selectedProvince, setSelectedProvince] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
 
   const handleRegister = () => {
-    if (!username || !email || !password || !selectedProvince) {
+    if (!username || !email || !password) {
       setError('Por favor, complete todos los campos');
       return;
     }
@@ -55,7 +52,6 @@ export default function RegisterScreen({ navigation }) {
         formData.append('username', username);
         formData.append('email', email);
         formData.append('password', password);
-        formData.append('province', selectedProvince);
 
         fetch('https://pruebaproyectouex.000webhostapp.com/proyectoTFG/insertar_user.php', {
           method: 'POST',
@@ -136,16 +132,6 @@ export default function RegisterScreen({ navigation }) {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
       />
-      <Picker
-        selectedValue={selectedProvince}
-        style={styles.input}
-        onValueChange={(itemValue) => setSelectedProvince(itemValue)}
-      >
-        <Picker.Item label="Selecciona una provincia" value="" />
-        {Object.keys(provincias).map((provincia) => (
-          <Picker.Item key={provincia} label={provincia} value={provincia} />
-        ))}
-      </Picker>
       <TouchableOpacity onPress={handleRememberMePress} style={styles.checkboxContainer}>
         <CheckBox
           value={rememberMe}

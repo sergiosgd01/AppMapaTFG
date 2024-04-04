@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, Image } from 'react-native';
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { Picker } from '@react-native-picker/picker';
-import provincias from '../provincias';
+import provincias from '../utils/provincias';
 import PropTypes from 'prop-types';
 import reloadIcon from '../assets/iconReload.png';
 import iconBañoPublico from '../assets/iconBañoPublico.png';

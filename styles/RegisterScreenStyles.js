@@ -46,7 +46,7 @@ const RegisterScreenStyles = {
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 40,
   },
 };
 
