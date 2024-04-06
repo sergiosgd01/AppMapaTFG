@@ -11,6 +11,7 @@ import UpcomingEventsScreen from './components/UpcomingEventsScreen';
 import PastEventsScreen from './components/PastEventsScreen';
 import MapMultiScreen from './components/MapMultiScreen';
 import MapScreen from './components/MapScreen';
+import MapAdminScreen from './components/MapAdminScreen';
 import PropTypes from 'prop-types';
 
 import pastEventsIcon from './assets/iconPastEvents.png';
@@ -111,6 +112,12 @@ export default function App() {
             component={MapMultiScreen}
             initialParams={{ event: 'Evento' }}
             options={({ route }) => ({ title: route.params.event.name })}
+          />
+	      <Stack.Screen
+            name="MapAdmin"
+            component={MapAdminScreen}
+            initialParams={{ eventName: 'Evento' }}
+            options={({ route }) => ({ title: route.params.eventName })}
           />
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Registro" component={RegisterScreen} />

@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import PropTypes from 'prop-types';
 import styles from '../styles/LiveEventsScreenStyles';
 import * as variables from '../utils/variables';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function LiveEventsScreen({ route, navigation }) {
   const user = route.params && route.params.user;
@@ -11,6 +12,18 @@ export default function LiveEventsScreen({ route, navigation }) {
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchEvents();
+
+      const timer = setTimeout(() => {
+        setShowWelcomeMessage(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }, [])
+  );
 
   useEffect(() => {
     fetchEvents();
@@ -59,7 +72,11 @@ export default function LiveEventsScreen({ route, navigation }) {
     if (event.multiuser === "1") {
       navigation.navigate('MapMulti', { event: event, fromLiveEvents: true });
     } else {
-      navigation.navigate('Map', { event: event, fromLiveEvents: true });
+      if (user.admin === "1") {
+        navigation.navigate('MapAdmin', { event: event, fromLiveEvents: true });
+	  } else {
+        navigation.navigate('Map', { event: event, fromLiveEvents: true });
+      }
     }
   };
 

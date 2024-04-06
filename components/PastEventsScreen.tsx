@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import PropTypes from 'prop-types';
 import styles from '../styles/PastEventsScreenStyles';
 import * as variables from '../utils/variables';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function PastEventsScreen({ route, navigation }) {
   const user = route.params && route.params.user;
@@ -11,6 +12,18 @@ export default function PastEventsScreen({ route, navigation }) {
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchEvents();
+
+      const timer = setTimeout(() => {
+        setShowWelcomeMessage(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }, [])
+  );
 
   useEffect(() => {
     fetchEvents();
