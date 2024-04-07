@@ -12,6 +12,7 @@ import PastEventsScreen from './components/PastEventsScreen';
 import MapMultiScreen from './components/MapMultiScreen';
 import MapScreen from './components/MapScreen';
 import MapAdminScreen from './components/MapAdminScreen';
+import MapMultiAdminScreen from './components/MapMultiAdminScreen';
 import PropTypes from 'prop-types';
 
 import pastEventsIcon from './assets/iconPastEvents.png';
@@ -116,6 +117,12 @@ export default function App() {
 	      <Stack.Screen
             name="MapAdmin"
             component={MapAdminScreen}
+            initialParams={{ eventName: 'Evento' }}
+            options={({ route }) => ({ title: route.params.eventName })}
+          />
+	      <Stack.Screen
+            name="MapMultiAdmin"
+            component={MapMultiAdminScreen}
             initialParams={{ eventName: 'Evento' }}
             options={({ route }) => ({ title: route.params.eventName })}
           />

@@ -32,7 +32,14 @@ export default function PastEventsScreen({ route, navigation }) {
       setShowWelcomeMessage(false);
     }, 3000);
 
-    return () => clearTimeout(timer);
+    const backHandler = navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault();
+    });
+
+    return () => {
+      backHandler();
+      clearTimeout(timer);
+    };
   }, []);
 
   const fetchEvents = () => {
@@ -55,10 +62,17 @@ export default function PastEventsScreen({ route, navigation }) {
   };
 
   const handleEventPress = (event) => {
-    if (event.multiuser === "1") {
-      navigation.navigate('MapMulti', { event: event });
-    } else {
-      navigation.navigate('Map', { event: event });
+    if (user && user.admin === "1") {
+      if (event.multiuser === "1") {
+		navigation.navigate('MapMultiAdmin', { event: event, fromLiveEvents: false });
+	  } else {
+		navigation.navigate('MapAdmin', { event: event, fromLiveEvents: false });
+	  }
+	}
+	else if (event.multiuser === "1") {
+	  navigation.navigate('MapMulti', { event: event, fromLiveEvents: false });
+	} else {
+	  navigation.navigate('Map', { event: event, fromLiveEvents: false });
     }
   };
 

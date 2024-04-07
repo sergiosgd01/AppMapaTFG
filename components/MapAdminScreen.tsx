@@ -17,7 +17,6 @@ export default function MapScreen({ route, navigation }) {
   const [showRoute, setShowRoute] = useState(false);
   const [showServices, setShowServices] = useState(false);
   const [serviceLocations, setServiceLocations] = useState([]);
-  const [improveLocation, setImproveLocation] = useState(false);
   const mapViewRef = useRef(null);
   const [selectedCoordinate, setSelectedCoordinate] = useState(null);
   const [modalServiceVisible, setModalServiceVisible] = useState(false);
@@ -51,10 +50,9 @@ export default function MapScreen({ route, navigation }) {
     setIsLoading(false);
   };
 
-  // Este efecto se ejecuta cuando cambia la variable 'improveLocation' o cuando el componente se monta inicialmente.
+  // Este efecto se ejecuta cuando el componente se monta inicialmente.
   useEffect(() => {
     fetchData();
-
     if (fromLiveEvents) {
       const TIME_DISTANCE = event.time_distance;
       const [time, distance] = TIME_DISTANCE.split('-').map(Number);
@@ -69,7 +67,7 @@ export default function MapScreen({ route, navigation }) {
         return () => clearInterval(interval);
       }
     }
-  }, [improveLocation]);
+  }, []);
 
   // Este efecto se ejecuta cuando cambia la variable 'locationMarkers'.
   useEffect(() => {
@@ -86,13 +84,8 @@ export default function MapScreen({ route, navigation }) {
   }, [locationMarkers]);
 
   useEffect(() => {
-    const correctedLocationMarkers = improveLocation ? getNearestRouteLocations(locationMarkers, routeMarkers) : locationMarkers;
-    setLocationMarkers(correctedLocationMarkers);
-  }, [routeMarkers]);
-
-  useEffect(() => {
     if (editingRoute) {
-      handleShowRoute();
+      setShowRoute(!showRoute);
     }
     setRouteCoordinates([]);
   }, [editingRoute]);
@@ -241,18 +234,6 @@ export default function MapScreen({ route, navigation }) {
     }
   };
 
-  const handleShowRoute = () => {
-    if (routeMarkers.length === 0) {
-      Alert.alert(
-        'Ruta no disponible',
-        'No hay datos disponibles para mostrar la ruta en este evento.',
-        [{ text: 'OK' }]
-      );
-    } else {
-      setShowRoute(!showRoute);
-    }
-  };
-
   const handleEditRoute = () => {
     setShowServices(false);
     setEditingService(false);
@@ -283,11 +264,13 @@ export default function MapScreen({ route, navigation }) {
 	    });
       }
       fetchRouteMarkers();
+      setEditingRoute(false);
       Alert.alert(
         'Puntos insertados',
         'Los puntos se han insertado correctamente en la base de datos.',
         [{ text: 'OK' }]
       );
+      setEditingRoute(true);
     } catch (error) {
       Alert.alert(
         'Error',
@@ -299,6 +282,7 @@ export default function MapScreen({ route, navigation }) {
 
   const deletePointRoute = async() => {
 	try {
+	  console.log('eliminado punto de ruta:', selectedRoutePoint);
 	  await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_route.php?id=${selectedRoutePoint.id}`, {
 	    method: 'POST',
 	  });
@@ -332,17 +316,9 @@ export default function MapScreen({ route, navigation }) {
     try {
       const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_service_code.php?code=${event.code}`);
       const locations = await response.json();
-      if (locations.length === 0) {
-      Alert.alert(
-        'Sin servicios',
-        'No hay servicios disponibles en este evento.',
-        [{ text: 'OK' }]
-      );
-      } else {
-         setShowServices(!showServices);
-        if (!showServices) {
-          fetchServiceLocations();
-        }
+      setShowServices(!showServices);
+      if (!showServices) {
+        fetchServiceLocations();
       }
     } catch (error) {
   	  console.error('Error al obtener las ubicaciones de los servicios:', error);
@@ -575,16 +551,16 @@ export default function MapScreen({ route, navigation }) {
           </Picker>
           <View style={styles.buttonContainer}>
             <Button
+              title="Cancelar"
+              onPress={() => setModalServiceVisible(!modalServiceVisible)}
+              color="red"
+            />
+            <Button
               title="Agregar"
               onPress={() => {
                 createService();
                 setModalServiceVisible(!modalServiceVisible);
               }}
-            />
-            <Button
-              title="Cancelar"
-              onPress={() => setModalServiceVisible(!modalServiceVisible)}
-              color="red"
             />
           </View>
         </View>
@@ -614,15 +590,15 @@ export default function MapScreen({ route, navigation }) {
 			  </View>
               <View style={styles.buttonContainer}>
                 <Button
+                  title="Cancelar"
+                  onPress={() => setModalDeleteVisible(false)}
+                />
+                <Button
                   title="Eliminar"
                   onPress={() => {
                     deleteService();
                   }}
                   color="red"
-                />
-                <Button
-                  title="Cancelar"
-                  onPress={() => setModalDeleteVisible(false)}
                 />
               </View>
             </>
@@ -648,19 +624,19 @@ export default function MapScreen({ route, navigation }) {
           <Text>¿Estás seguro de que deseas eliminar este punto de la ruta?</Text>
           <View style={styles.buttonContainer}>
             <Button
+              title="Cancelar"
+              onPress={() => {
+                setModalDeleteRouteVisible(false);
+                setSelectedRoutePoint(null);
+              }}
+            />
+            <Button
               title="Eliminar"
               onPress={() => {
                 deletePointRoute();
                 setModalDeleteRouteVisible(false);
               }}
               color="red"
-            />
-            <Button
-              title="Cancelar"
-              onPress={() => {
-                setModalDeleteRouteVisible(false);
-                setSelectedRoutePoint(null);
-              }}
             />
           </View>
         </View>
@@ -689,17 +665,17 @@ export default function MapScreen({ route, navigation }) {
         />
         <View style={styles.buttonContainer}>
           <Button
-            title="Guardar"
-            onPress={() => {
-              handleSaveName();
-            }}
-          />
-          <Button
             title="Cancelar"
             onPress={() => {
               handleCancelEditName();
             }}
             color="red"
+          />
+          <Button
+            title="Guardar"
+            onPress={() => {
+              handleSaveName();
+            }}
           />
         </View>
       </View>
@@ -740,17 +716,17 @@ export default function MapScreen({ route, navigation }) {
         </View>
         <View style={styles.buttonContainer}>
           <Button
-            title="Guardar"
-            onPress={() => {
-              handleCancelEditDate();
-            }}
-          />
-          <Button
             title="Cancelar"
             onPress={() => {
               handleCancelEditDate();
             }}
             color="red"
+          />
+          <Button
+            title="Guardar"
+            onPress={() => {
+              handleSaveDate();
+            }}
           />
         </View>
       </View>
@@ -776,8 +752,8 @@ export default function MapScreen({ route, navigation }) {
             placeholder="Código del evento"
           />
           <View style={styles.modalButtons}>
+            <Button title="Volver" onPress={hideEnterCodeModalHandler} />
             <Button title="Aceptar" onPress={handleEnterCodeConfirmation} />
-            <Button title="Cancelar" onPress={hideEnterCodeModalHandler} color="red" />
           </View>
         </View>
       </View>
@@ -803,8 +779,8 @@ export default function MapScreen({ route, navigation }) {
             maxLength={200}
           />
           <View style={styles.modalButtons}>
-            <Button title="Cancelar" onPress={() => cancelEvent(1)} color="red"/>
             <Button title="Volver" onPress={() => hideCancelModalHandler()} />
+            <Button title="Cancelar" onPress={() => cancelEvent(1)} color="red"/>
           </View>
         </View>
       </View>
@@ -829,18 +805,18 @@ export default function MapScreen({ route, navigation }) {
             placeholder="Escriba 'ELIMINAR' aquí"
           />
           <View style={styles.buttonContainer}>
-            <Button
-              title="Eliminar"
-              onPress={deleteEvent}
-              disabled={enteredText !== 'ELIMINAR'}
-              color="red"
-            />
 			<Button
               title="Volver"
               onPress={() => {
                 setShowDeleteEventModal(false);
                 setEnteredText('');
               }}
+            />
+            <Button
+              title="Eliminar"
+              onPress={deleteEvent}
+              disabled={enteredText !== 'ELIMINAR'}
+              color="red"
             />
           </View>
         </View>
@@ -967,11 +943,11 @@ export default function MapScreen({ route, navigation }) {
             )}
             <View style={styles.header}>
               <TouchableOpacity onPress={() => setModalNameVisible(true)} style={styles.touchable}>
-                <Text style={styles.title}>{newEventName}</Text>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.title}>{newEventName}</Text>
                 <Image source={iconEdit} style={styles.iconEdit} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setModalDateVisible(true)} style={styles.touchable}>
-                <Text style={styles.title}>{`${formatDate(eventStartDate)} ${formatTime(eventStartDate)} - ${formatDate(eventEndDate)} ${formatTime(eventEndDate)}`}</Text>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.title}>{`${formatDate(eventStartDate)} ${formatTime(eventStartDate)} - ${formatDate(eventEndDate)} ${formatTime(eventEndDate)}`}</Text>
                 <Image source={iconEdit} style={styles.iconEdit} />
               </TouchableOpacity>
             </View>

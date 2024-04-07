@@ -40,7 +40,6 @@ export default function LiveEventsScreen({ route, navigation }) {
       backHandler();
       clearTimeout(timer);
     };
-
   }, []);
 
   const fetchEvents = () => {
@@ -69,14 +68,17 @@ export default function LiveEventsScreen({ route, navigation }) {
   };
 
   const handleEventPress = (event) => {
-    if (event.multiuser === "1") {
-      navigation.navigate('MapMulti', { event: event, fromLiveEvents: true });
-    } else {
-      if (user.admin === "1") {
-        navigation.navigate('MapAdmin', { event: event, fromLiveEvents: true });
+    if (user && user.admin === "1") {
+      if (event.multiuser === "1") {
+		navigation.navigate('MapMultiAdmin', { event: event, fromLiveEvents: true });
 	  } else {
-        navigation.navigate('Map', { event: event, fromLiveEvents: true });
-      }
+		navigation.navigate('MapAdmin', { event: event, fromLiveEvents: true });
+	  }
+	}
+	else if (event.multiuser === "1") {
+	  navigation.navigate('MapMulti', { event: event, fromLiveEvents: true });
+	} else {
+	  navigation.navigate('Map', { event: event, fromLiveEvents: true });
     }
   };
 

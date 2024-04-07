@@ -14,6 +14,11 @@ const MapScreenStyles = {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    maxWidth: '90%',
+  },
   iconEdit: {
     width: 18,
     height: 18,
@@ -84,10 +89,6 @@ const MapScreenStyles = {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   cancelledMessage: {
     backgroundColor: 'rgba(255, 0, 0, 0.7)',

@@ -6,7 +6,7 @@ import styles from '../styles/UpcomingEventsScreenStyles';
 import * as variables from '../utils/variables';
 import { useFocusEffect } from '@react-navigation/native';
 
-export default function UpcomingEventsScreen({ route }) {
+export default function UpcomingEventsScreen({ route, navigation }) {
   const user = route.params && route.params.user;
   const [events, setEvents] = useState([]);
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
@@ -32,7 +32,14 @@ export default function UpcomingEventsScreen({ route }) {
       setShowWelcomeMessage(false);
     }, 3000);
 
-    return () => clearTimeout(timer);
+    const backHandler = navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault();
+    });
+
+    return () => {
+      backHandler();
+      clearTimeout(timer);
+    };
   }, []);
 
   const fetchEvents = () => {
@@ -51,21 +58,30 @@ export default function UpcomingEventsScreen({ route }) {
 
   const filterUpcomingEvents = () => {
     const currentDate = new Date();
-    return events.filter(event => new Date(event.startDate) > currentDate && event.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    return events.filter(events => new Date(events.startDate) > currentDate && events.name.toLowerCase().includes(searchTerm.toLowerCase()));
   };
 
-  const handleEventPress = () => {
-    Alert.alert(
-      'El evento aún no ha comenzado',
-      'Este evento aún no ha dado comienzo. Por favor, inténtalo de nuevo más tarde.',
-      [
-        { text: 'Aceptar', onPress: () => {} },
-      ]
-    );
+  const handleEventPress = (event) => {
+    if (user && user.admin === "1") {
+      if (event.multiuser === "1") {
+		navigation.navigate('MapMultiAdmin', { event: event, fromLiveEvents: false });
+	  } else {
+		navigation.navigate('MapAdmin', { event: event, fromLiveEvents: false });
+	  }
+	}
+	else {
+      Alert.alert(
+        'El evento aún no ha comenzado',
+        'Este evento aún no ha dado comienzo. Por favor, inténtalo de nuevo más tarde.',
+        [
+          { text: 'Aceptar', onPress: () => {} },
+        ]
+      );
+	}
   };
 
   const renderEventItem = ({ item }) => (
-    <TouchableOpacity onPress={() => handleEventPress()} style={styles.eventItem}>
+    <TouchableOpacity onPress={() => handleEventPress(item)} style={styles.eventItem}>
       <View style={styles.eventDetails}>
         <Image source={{ uri: item.image }} style={styles.eventImage} />
         <View style={{ flex: 1 }}>
