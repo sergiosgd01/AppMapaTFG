@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, Image, Modal, TextInput, Button } from 'react-native';
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { Picker } from '@react-native-picker/picker';
 import provincias from '../utils/provincias';
 import PropTypes from 'prop-types';
 import reloadIcon from '../assets/iconReload.png';
+import iconEdit from '../assets/iconEdit.png';
 import styles from '../styles/MapMultiAdminScreenStyles';
 
 // Componente personalizado para el marcador con el número de dorsal dentro de un círculo
@@ -26,8 +27,6 @@ const CustomMarker = ({ coordinate, dorsal, color, name, onPress }) => (
 export default function MapMultiAdminScreen({ route, navigation }) {
   const { event, fromLiveEvents } = route.params;
   const [userLocations, setUserLocations] = useState([]);
-  const [eventSchedule, setEventSchedule] = useState('');
-  const [formattedLastMarkerTime, setFormattedLastMarkerTime] = useState('');
   const [selectedDorsal, setSelectedDorsal] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const uniqueDorsals = [...new Set(userLocations.map(location => location.dorsal))];
@@ -40,6 +39,30 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   const [showServices, setShowServices] = useState(false);
   const [serviceLocations, setServiceLocations] = useState([]);
   const [serviceTypes, setServiceTypes] = useState([]);
+  const [selectedCoordinate, setSelectedCoordinate] = useState(null);
+  const [modalServiceVisible, setModalServiceVisible] = useState(false);
+  const [editingService, setEditingService] = useState(false);
+  const [editingRoute, setEditingRoute] = useState(false);
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [selectedService, setSelectedService] = useState(null);
+  const [modalDeleteVisible, setModalDeleteVisible] = useState(false);
+  const [selectedRoutePoint, setSelectedRoutePoint] = useState(null);
+  const [modalDeleteRouteVisible, setModalDeleteRouteVisible] = useState(false);
+  const [modalNameVisible, setModalNameVisible] = useState(false);
+  const [newEventName, setNewEventName] = useState(event.name);
+  const [modalDateVisible, setModalDateVisible] = useState(false);
+  const [newEventStartDate, setNewEventStartDate] = useState(event.startDate);
+  const [newEventEndDate, setNewEventEndDate] = useState(event.endDate);
+  const [eventStartDate, setEventStartDate] = useState(event.startDate);
+  const [eventEndDate, setEventEndDate] = useState(event.endDate);
+  const [isEventCancelled, setIsEventCancelled] = useState<boolean>(false);
+  const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string>('');
+  const [showEnterCodeModal, setShowEnterCodeModal] = useState<boolean>(false);
+  const [enteredCode, setEnteredCode] = useState<string>('');
+  const [showDeleteEventModal, setShowDeleteEventModal] = useState(false);
+  const [enteredText, setEnteredText] = useState('');
+  const [selectedServiceType, setSelectedServiceType] = useState('1');
 
   const fetchData = async () => {
     await fetchUserLocations();
@@ -49,7 +72,6 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   useEffect(() => {
     fetchData();
-
     if (fromLiveEvents) {
       const TIME_DISTANCE = event.time_distance;
       const [time, distance] = TIME_DISTANCE.split('-').map(Number);
@@ -94,6 +116,20 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   }, [selectedDorsal, userLocations]);
 
   useEffect(() => {
+    if (editingRoute) {
+      setShowRoute(!showRoute);
+    }
+    setRouteCoordinates([]);
+  }, [editingRoute]);
+
+  useEffect(() => {
+    setIsEventCancelled(event.cancelled == 1);
+    return () => {
+      setRouteCoordinates([]);
+    };
+  }, []);
+
+  useEffect(() => {
     fetchServiceTypes();
   }, []);
 
@@ -102,25 +138,15 @@ export default function MapMultiAdminScreen({ route, navigation }) {
       const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_location.php?code=${event.code}`);
       const markers = await response.json();
       setUserLocations(markers);
-      if (markers.length > 0) {
-        setFormattedLastMarkerTime(markers[markers.length - 1].timestamp);
-        if (!initialRegion) {
-          setInitialRegion(calculateInitialRegion(markers));
-        }
-      } else {
+      if (markers.length == 0) {
         const province = provincias[event.province];
         if (province) {
-          if (!initialRegion) {
-            setInitialRegion(calculateInitialRegion([], province.lat, province.lng));
-          }
+          setInitialRegion(calculateInitialRegion([], province.lat, province.lng));
         } else {
-          if (!initialRegion) {
-            setInitialRegion(calculateInitialRegion([], 40.4168, -3.7038));
-          }
+          setInitialRegion(calculateInitialRegion([], 40.4168, -3.7038));
         }
       }
-      setEventSchedule(`${formatDate(event.startDate)} ${formatTime(event.startDate)} - ${formatDate(event.endDate)} ${formatTime(event.endDate)}`);
-      navigation.setOptions({ title: event.name });
+      navigation.setOptions({ title: `Edición del evento` });
     } catch (error) {
       console.error('Error al obtener los marcadores de ubicación:', error);
     }
@@ -156,44 +182,318 @@ export default function MapMultiAdminScreen({ route, navigation }) {
     }
   };
 
+  const handleSaveName = () => {
+    setModalNameVisible(false);
+    updateNameEvent();
+  };
+
+  const handleCancelEditName = () => {
+    setModalNameVisible(false);
+    setNewEventName(event.name);
+  };
+
+  const updateNameEvent = async() => {
+    try {
+      const formData = new FormData();
+      formData.append('id', event.id);
+      formData.append('name', newEventName);
+      await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/update_name_event.php?`, {
+        method: 'POST',
+        body: formData
+      });
+      Alert.alert(
+		'Nombre actualizado',
+		'El nombre del evento se ha actualizado correctamente.',
+		[{ text: 'OK' }]
+	  );
+      setNewEventName(newEventName);
+	} catch (error) {
+	  Alert.alert(
+		'Error',
+		'Se produjo un error al intentar actualizar el nombre. Por favor, inténtalo de nuevo más tarde.',
+		[{ text: 'OK' }]
+	  );
+	}
+  };
+
+  const handleSaveDate = () => {
+    setModalDateVisible(false);
+    updateDateEvent();
+  };
+
+  const handleCancelEditDate = () => {
+    setModalDateVisible(false);
+    setNewEventStartDate(event.startDate);
+    setNewEventEndDate(event.endDate);
+  };
+
+  const updateDateEvent = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('id', event.id);
+      formData.append('startDate', newEventStartDate);
+      formData.append('endDate', newEventEndDate);
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/update_date_event.php`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        if (responseData) {
+
+          Alert.alert(
+            'Fechas actualizadas',
+            'Las fechas del evento se han actualizado correctamente.',
+            [{ text: 'OK' }]
+          );
+          setEventStartDate(newEventStartDate);
+          setEventEndDate(newEventEndDate);
+        } else {
+          throw new Error('Error al actualizar las fechas.');
+        }
+      } else {
+        throw new Error('Error al actualizar las fechas.');
+      }
+    } catch (error) {
+      setNewEventEndDate(event.endDate);
+      setNewEventStartDate(event.startDate);
+      Alert.alert(
+        'Error',
+        'Se produjo un error al intentar actualizar las fechas. Por favor, inténtalo de nuevo más tarde.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleEditRoute = () => {
+    setShowServices(false);
+    setEditingService(false);
+    setShowRoute(!showRoute);
+    setEditingRoute(!editingRoute);
+    fetchRouteMarkers();
+  };
+
+  const handleRoutePress = (route) => {
+    setSelectedRoutePoint(route);
+    setModalDeleteRouteVisible(true);
+  };
+
+  const insertPointRoute = async () => {
+    try {
+      for (const point of routeCoordinates) {
+        console.log(point);
+        const formData = new URLSearchParams();
+        formData.append('code', event.code);
+        formData.append('latitude', point.latitude);
+        formData.append('longitude', point.longitude,);
+        await fetch('https://pruebaproyectouex.000webhostapp.com/proyectoTFG/insertar_route.php', {
+	      method: 'POST',
+	      headers: {
+	        'Content-Type': 'application/x-www-form-urlencoded',
+	      },
+	      body: formData.toString(),
+	    });
+      }
+      fetchRouteMarkers();
+      setEditingRoute(false);
+      Alert.alert(
+        'Puntos insertados',
+        'Los puntos se han insertado correctamente en la base de datos.',
+        [{ text: 'OK' }]
+      );
+      setEditingRoute(true);
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Se produjo un error al intentar insertar los puntos en la base de datos. Por favor, inténtalo de nuevo más tarde.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const deletePointRoute = async() => {
+	try {
+	  console.log('eliminado punto de ruta:', selectedRoutePoint);
+	  await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_route.php?id=${selectedRoutePoint.id}`, {
+	    method: 'POST',
+	  });
+      fetchRouteMarkers();
+      setModalDeleteVisible(false);
+      setSelectedRoutePoint(null);
+	} catch (error) {
+      console.error('Error al eliminar el punto de la ruta:', error);
+	  Alert.alert(
+		'Error',
+		'Se produjo un error al intentar eliminar el punto de la ruta. Por favor, inténtalo de nuevo más tarde.',
+		[{ text: 'OK' }]
+	  );
+	}
+  };
+
+  const handleEditServices = () => {
+    setEditingRoute(false);
+    setShowServices(!showServices);
+    setEditingService(!editingService);
+    setModalServiceVisible(false);
+    fetchServiceLocations();
+  };
+
+  const handleServicePress = (service) => {
+    setSelectedService(service);
+    setModalDeleteVisible(true);0
+  };
+
   const handleShowServices = async () => {
     try {
       const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_service_code.php?code=${event.code}`);
       const locations = await response.json();
-      if (locations.length === 0) {
+      setShowServices(!showServices);
+      if (!showServices) {
+        fetchServiceLocations();
+      }
+    } catch (error) {
+  	  console.error('Error al obtener las ubicaciones de los servicios:', error);
+    }
+  };
+
+  const createService = async () => {
+    try {
+      console.log('selectedServiceType', selectedServiceType);
+      const formData = new URLSearchParams();
+      formData.append('code', event.code);
+      formData.append('latitude', selectedCoordinate.latitude);
+      formData.append('longitude', selectedCoordinate.longitude,);
+      formData.append('type', selectedServiceType);
+
+      await fetch('https://pruebaproyectouex.000webhostapp.com/proyectoTFG/insertar_service.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString(),
+      });
+
+      setSelectedCoordinate(null);
+
+      fetchServiceLocations();
+    } catch (error) {
+      console.error('Error al crear el servicio:', error);
       Alert.alert(
-        'Sin servicios',
-        'No hay servicios disponibles en este evento.',
+        'Error',
+        'Se produjo un error al intentar crear el servicio. Por favor, inténtalo de nuevo más tarde.',
         [{ text: 'OK' }]
       );
-      } else {
-        setShowServices(!showServices);
-        if (!showServices) {
-          fetchServiceLocations();
-        }
-      }
+    }
+  };
+
+  const deleteService = async() => {
+    try {
+      await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_service.php?id=${selectedService.id}`, {
+        method: 'POST',
+      });
+      Alert.alert(
+		'Servicio eliminado',
+		'El servicio se ha eliminado correctamente.',
+		[{ text: 'OK' }]
+	  );
+      fetchServiceLocations();
+      setModalDeleteVisible(false);
+      setSelectedService(null);
 	} catch (error) {
-	  console.error('Error al obtener las ubicaciones de los servicios:', error);
+      console.error('Error al eliminar el servicio:', error);
+	  Alert.alert(
+		'Error',
+		'Se produjo un error al intentar eliminar el servicio. Por favor, inténtalo de nuevo más tarde.',
+		[{ text: 'OK' }]
+	  );
 	}
   };
 
-  const handleShowRoute = () => {
-    if (routeMarkers.length === 0) {
-      Alert.alert(
-        'Ruta no disponible',
-        'No hay datos disponibles para mostrar la ruta en este evento.',
-        [{ text: 'OK' }]
-      );
+  const cancelEvent = async (action: number) => {
+    try {
+      const formData = new FormData();
+      formData.append('code', event.code);
+      formData.append('action', action);
+      if(action == 1) {
+        formData.append('cancelReason', cancelReason.toString());
+      }
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/cancel_event.php`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.text();
+      if (action === 1) {
+        hideCancelModalHandler();
+        setIsEventCancelled(true);
+      } else {
+        setIsEventCancelled(false);
+      }
+    } catch (error) {
+      console.error('Error al cancelar el evento:', error);
+    }
+  };
+
+  const hideCancelModalHandler = () => {
+    setShowCancelReasonModal(false);
+    setCancelReason('');
+  };
+
+  const handleCancelReasonConfirm = () => {
+    hideCancelModalHandler();
+    setIsEventCancelled(true);
+  };
+
+  const showEnterCodeModalHandler = () => {
+    setShowEnterCodeModal(true);
+  };
+
+  const hideEnterCodeModalHandler = () => {
+    setShowEnterCodeModal(false);
+    setEnteredCode('');
+  };
+
+  const handleEnterCodeConfirmation = () => {
+    if (enteredCode === event.code) {
+      hideEnterCodeModalHandler();
+      setShowCancelReasonModal(true);
     } else {
-      setShowRoute(!showRoute);
+      alert("El código introducido no coincide con el código del evento actual. Por favor, inténtalo de nuevo.");
+    }
+  };
+
+  const showDeleteEventModalHandler = () => {
+    setShowDeleteEventModal(true);
+  };
+
+  const deleteEvent = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('id', event.id);
+
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_event.php`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setShowDeleteEventModal(false);
+        navigation.goBack();
+      } else {
+        console.error('Error al eliminar el evento:', data.error);
+      }
+    } catch (error) {
+      console.error('Error al eliminar el evento:', error);
     }
   };
 
   const calculateInitialRegion = (markers, lat = null, lng = null) => {
-    let region = {
+	let region = {
       latitudeDelta: 0.5,
       longitudeDelta: 0.5,
-      };
+    };
     if (markers.length > 0) {
       region = {
         latitude: parseFloat(markers[markers.length - 1].latitude),
@@ -220,6 +520,25 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return `${date.getHours()}:${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
+  };
+
+  const locationPolylineCoordinates = userLocations.map(marker => ({
+    latitude: parseFloat(marker.latitude),
+    longitude: parseFloat(marker.longitude),
+  }));
+
+  const routePolylineCoordinates = routeMarkers.map(marker => ({
+    latitude: parseFloat(marker.latitude),
+    longitude: parseFloat(marker.longitude),
+  }));
+
+  const getMarkerIcon = (service, serviceTypes) => {
+    const serviceType = serviceTypes.find(type => type.id === service.type);
+    if (serviceType && serviceType.image) {
+      return { uri: serviceType.image };
+    } else {
+      return null;
+    }
   };
 
   const generateMapMarkers = () => {
@@ -313,15 +632,6 @@ export default function MapMultiAdminScreen({ route, navigation }) {
     return mapPolylines;
   };
 
-  const getMarkerIcon = (service, serviceTypes) => {
-    const serviceType = serviceTypes.find(type => type.id === service.type);
-    if (serviceType && serviceType.image) {
-      return { uri: serviceType.image };
-    } else {
-      return null;
-    }
-  };
-
   const showAlert = (cancelledInfo) => {
     if (cancelledInfo == '' || cancelledInfo == null) {
       Alert.alert(
@@ -340,6 +650,303 @@ export default function MapMultiAdminScreen({ route, navigation }) {
     }
   };
 
+  // Función para el modal de agregar servicio
+  const renderServiceModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalServiceVisible}
+      onRequestClose={() => {
+        setModalServiceVisible(!modalServiceVisible);
+      }}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Agregar nuevo servicio</Text>
+          <Picker
+            selectedValue={selectedServiceType}
+            style={{ height: 50, width: 200 }}
+            onValueChange={(itemValue) => setSelectedServiceType(itemValue)}
+          >
+            {serviceTypes.map((type, index) => (
+              <Picker.Item key={index} label={type.name} value={type.id} />
+            ))}
+          </Picker>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Cancelar"
+              onPress={() => setModalServiceVisible(!modalServiceVisible)}
+              color="red"
+            />
+            <Button
+              title="Agregar"
+              onPress={() => {
+                createService();
+                setModalServiceVisible(!modalServiceVisible);
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de detalle del servicio
+  const renderServiceDetailModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalDeleteVisible}
+      onRequestClose={() => {
+        setModalDeleteVisible(!modalDeleteVisible);
+      }}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>Detalle del Servicio</Text>
+          {selectedService && (
+            <>
+              <View style={{ marginBottom: 10 }}>
+                <Text style={styles.detailText}>Tipo: {selectedService.type}</Text>
+                <Text style={styles.detailText}>Latitud: {selectedService.latitude}</Text>
+                <Text style={styles.detailText}>Longitud: {selectedService.longitude}</Text>
+			  </View>
+              <View style={styles.buttonContainer}>
+                <Button
+                  title="Cancelar"
+                  onPress={() => setModalDeleteVisible(false)}
+                />
+                <Button
+                  title="Eliminar"
+                  onPress={() => {
+                    deleteService();
+                  }}
+                  color="red"
+                />
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de eliminación de punto de ruta
+  const renderDeleteRoutePointModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalDeleteRouteVisible && editingRoute && !!selectedRoutePoint}
+      onRequestClose={() => {
+        setModalDeleteRouteVisible(false);
+      }}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Eliminar Punto de Ruta</Text>
+          <Text>¿Estás seguro de que deseas eliminar este punto de la ruta?</Text>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Cancelar"
+              onPress={() => {
+                setModalDeleteRouteVisible(false);
+                setSelectedRoutePoint(null);
+              }}
+            />
+            <Button
+              title="Eliminar"
+              onPress={() => {
+                deletePointRoute();
+                setModalDeleteRouteVisible(false);
+              }}
+              color="red"
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de edición de nombre de evento
+  const renderEditEventNameModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalNameVisible}
+      onRequestClose={() => {
+        setModalNameVisible(!modalNameVisible);
+      }}
+    >
+      <View style={styles.modalView}>
+        <Text style={styles.modalTitle}>Editar Nombre del Evento</Text>
+        <TextInput
+          style={styles.input}
+          value={newEventName}
+          onChangeText={(text) => setNewEventName(text)}
+          maxLength={60}
+          placeholder="Nuevo Nombre"
+        />
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Cancelar"
+            onPress={() => {
+              handleCancelEditName();
+            }}
+            color="red"
+          />
+          <Button
+            title="Guardar"
+            onPress={() => {
+              handleSaveName();
+            }}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de edición de fechas de evento
+  const renderEditEventDateModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalDateVisible}
+      onRequestClose={() => {
+        setModalDateVisible(!modalDateVisible);
+      }}
+    >
+      <View style={styles.modalView}>
+        <Text style={styles.modalTitle}>Editar Fechas del Evento</Text>
+        <View style={styles.inputContainer}>
+          <Text style={styles.labelText}>Fecha de Inicio:</Text>
+          <TextInput
+            style={styles.input}
+            value={newEventStartDate}
+            maxLength={19}
+            onChangeText={(text) => setNewEventStartDate(text)}
+            placeholder="Nueva Fecha de Inicio"
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.labelText}>Fecha Final:</Text>
+          <TextInput
+            style={styles.input}
+            value={newEventEndDate}
+            maxLength={19}
+            onChangeText={(text) => setNewEventEndDate(text)}
+            placeholder="Nueva Fecha Final"
+          />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Cancelar"
+            onPress={() => {
+              handleCancelEditDate();
+            }}
+            color="red"
+          />
+          <Button
+            title="Guardar"
+            onPress={() => {
+              handleSaveDate();
+            }}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de inserción de código de evento
+  const renderEnterCodeModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showEnterCodeModal}
+      onRequestClose={hideEnterCodeModalHandler}
+    >
+      <View style={[styles.modalContainer, { paddingHorizontal: 20 }]}>
+        <View style={styles.modalContent}>
+          <Text style={styles.textModal}>Por seguridad, se debe introducir el código del evento para poder suspenderlo.</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setEnteredCode}
+            value={enteredCode}
+            keyboardType="numeric"
+            placeholder="Código del evento"
+          />
+          <View style={styles.modalButtons}>
+            <Button title="Volver" onPress={hideEnterCodeModalHandler} />
+            <Button title="Aceptar" onPress={handleEnterCodeConfirmation} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de confirmación de cancelación de evento
+  const renderCancelReasonModal = () => (
+    <Modal
+      animationType="slide-up"
+      transparent={true}
+      visible={showCancelReasonModal}
+      onRequestClose={() => hideCancelModalHandler()}
+    >
+      <View style={[styles.modalContainer, { paddingHorizontal: 20 }]}>
+        <View style={styles.modalContent}>
+          <Text style={styles.textModal}>Por favor, ingrese el motivo de cancelación (máximo 200 caracteres):</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setCancelReason}
+            value={cancelReason}
+            placeholder="Motivo de cancelación"
+            maxLength={200}
+          />
+          <View style={styles.modalButtons}>
+            <Button title="Volver" onPress={() => hideCancelModalHandler()} />
+            <Button title="Cancelar" onPress={() => cancelEvent(1)} color="red"/>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de eliminación de evento
+  const renderDeleteEventModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showDeleteEventModal}
+      onRequestClose={() => setShowDeleteEventModal(false)}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Para eliminar el evento, escriba "ELIMINAR" y presione Eliminar:</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setEnteredText}
+            value={enteredText}
+            placeholder="Escriba 'ELIMINAR' aquí"
+          />
+          <View style={styles.buttonContainer}>
+			<Button
+              title="Volver"
+              onPress={() => {
+                setShowDeleteEventModal(false);
+                setEnteredText('');
+              }}
+            />
+            <Button
+              title="Eliminar"
+              onPress={deleteEvent}
+              disabled={enteredText !== 'ELIMINAR'}
+              color="red"
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <View style={{ flex: 1 }}>
       {isLoading ? (
@@ -352,52 +959,59 @@ export default function MapMultiAdminScreen({ route, navigation }) {
             ref={mapRef}
             style={{ flex: 1 }}
             initialRegion={initialRegion}
+			onPress={(event) => {
+              if (editingRoute) {
+                const { latitude, longitude } = event.nativeEvent.coordinate;
+                setRouteCoordinates([...routeCoordinates, { latitude, longitude }]);
+              }
+              if (editingService) {
+                const { latitude, longitude } = event.nativeEvent.coordinate;
+                setSelectedCoordinate({ latitude, longitude });
+                setModalServiceVisible(true);
+              }
+            }}
           >
             {generateMapMarkers()}
             {generateMapPolylines()}
-            {showRoute && (
+            {editingRoute && (
               <>
                 <Polyline
-                  coordinates={routeMarkers.map(marker => ({
-                    latitude: parseFloat(marker.latitude),
-                    longitude: parseFloat(marker.longitude),
-                  }))}
+                  coordinates={routePolylineCoordinates}
                   strokeColor="#ff0000"
                   strokeWidth={4}
                   lineDashPattern={[5, 10]}
                 />
                 {routeMarkers.map((marker, index) => {
-                  // Muestra marcador solo de la última ubicación
-                  if (index === 0 || index === routeMarkers.length - 1) {
-                    return (
-                      <Marker
-                        key={index}
-                        coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
-                        pinColor={index === 0 ? 'green' : 'red'}
-                        onPress={() => {
-                          if (index === 0) {
-                            Alert.alert(
-                              'Punto de partida',
-                              'Este es el punto de partida del recorrido.'
-                            );
-                          } else if (index === routeMarkers.length - 1){
-                            Alert.alert(
-                              'Punto final',
-                              'Este es el punto final del recorrido.'
-                            );
-                          }
-                          else {
-                            return null;
-		    		      }
-                        }}
-                      />
-                    );
-                  } else {
-                    return null;
-                  }
-                })}
+	              return (
+	                <Marker
+	                  key={index}
+	                  coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+	                  pinColor={'red'}
+	                  onPress={() => handleRoutePress(marker)}
+	                />
+	              );
+	            })}
               </>
             )}
+            {editingRoute && (
+	          <>
+	            <Polyline
+	              coordinates={routeCoordinates}
+	              strokeColor="#ff0000"
+	              strokeWidth={4}
+	              lineDashPattern={[5, 10]}
+	            />
+	            {routeCoordinates.map((marker, index) => {
+	              return (
+	                <Marker
+	                  key={index}
+	                  coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+	                  pinColor={'red'}
+	                />
+	              );
+	            })}
+	          </>
+	        )}
             {/* Marcadores de los servicios */}
             {showServices && serviceLocations.map((service, index) => {
               const icon = getMarkerIcon(service, serviceTypes);
@@ -408,6 +1022,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
                     latitude: parseFloat(service.latitude),
                     longitude: parseFloat(service.longitude)
                   }}
+                  onPress={() => handleServicePress(service)}
                 >
                 {icon && <Image source={icon} style={{ width: 32, height: 32 }} />}
                 </Marker>
@@ -415,7 +1030,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
             })}
           </MapView>
           <View style={styles.container}>
-            {event.cancelled == 1 && (
+            {isEventCancelled && (
               <View style={styles.cancelledMessage}>
                 <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -426,39 +1041,57 @@ export default function MapMultiAdminScreen({ route, navigation }) {
               </View>
             )}
             <View style={styles.header}>
-              <Text style={styles.title}>{eventSchedule}</Text>
-              {formattedLastMarkerTime && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-                  <Text>Última actualización: {formattedLastMarkerTime}</Text>
-                </View>
-              )}
+              <TouchableOpacity onPress={() => setModalNameVisible(true)} style={styles.touchable}>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.title}>{newEventName}</Text>
+                <Image source={iconEdit} style={styles.iconEdit} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setModalDateVisible(true)} style={styles.touchable}>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.title}>{`${formatDate(eventStartDate)} ${formatTime(eventStartDate)} - ${formatDate(eventEndDate)} ${formatTime(eventEndDate)}`}</Text>
+                <Image source={iconEdit} style={styles.iconEdit} />
+              </TouchableOpacity>
             </View>
             <View style={styles.containerShow}>
-       	      <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
-                <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
+              <TouchableOpacity style={[styles.showRouteButton, editingRoute && styles.activeButton]} onPress={handleEditRoute}>
+                <Text style={styles.buttonText}>{editingRoute ? 'Finalizar Edición' : 'Editar Ruta'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
-                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
+              <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleEditServices}>
+                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Finalizar Edición' : 'Editar Servicios'}</Text>
               </TouchableOpacity>
-	        </View>
-	        <View style={styles.containerPickerUpdate}>
-              <Picker
-                selectedValue={selectedDorsal}
-                style={styles.commonButton}
-                onValueChange={(itemValue) => setSelectedDorsal(itemValue)}
+            </View>
+			<View style={styles.containerCancelDelete}>
+              <TouchableOpacity
+                style={[styles.cancelEventButton, styles.activeButton]}
+                onPress={() => isEventCancelled ? cancelEvent(0) : setShowEnterCodeModal(true)}
+                >
+                <Text style={styles.buttonText}>{isEventCancelled ? 'Reanudar evento' : 'Suspender evento'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.deleteEventButton, styles.activeButton]}
+                onPress={showDeleteEventModalHandler}
               >
-                {allDorsals.map((dorsal, index) => (
-                  <Picker.Item key={index} label={dorsal} value={dorsal} />
-                ))}
-              </Picker>
-              <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image source={reloadIcon} style={styles.imageStyle} />
-                  <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
-                </View>
+                <Text style={[styles.buttonText, {color: 'red'}]}>Eliminar Evento</Text>
               </TouchableOpacity>
             </View>
           </View>
+          {editingRoute && (
+            <View style={styles.insertButtonContainer}>
+              <Button
+                title="Insertar"
+                onPress={() => {
+                  insertPointRoute();
+                }}
+                color="#6C21DC"
+              />
+            </View>
+          )}
+          {renderServiceModal()}
+          {renderServiceDetailModal()}
+          {renderDeleteRoutePointModal()}
+          {renderEditEventNameModal()}
+          {renderEditEventDateModal()}
+          {renderEnterCodeModal()}
+          {renderCancelReasonModal()}
+          {renderDeleteEventModal()}
         </View>
       )}
     </View>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Switch, Alert, Image, Modal, TextInput, Button } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, Image, Modal, TextInput, Button } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import provincias from '../utils/provincias';
@@ -42,7 +42,7 @@ export default function MapScreen({ route, navigation }) {
   const [showDeleteEventModal, setShowDeleteEventModal] = useState(false);
   const [enteredText, setEnteredText] = useState('');
   const [serviceTypes, setServiceTypes] = useState([]);
-  const [selectedServiceType, setSelectedServiceType] = useState('');
+  const [selectedServiceType, setSelectedServiceType] = useState('1');
 
   const fetchData = async () => {
     await fetchLocationMarkers();
