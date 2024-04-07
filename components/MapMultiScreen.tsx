@@ -5,9 +5,6 @@ import { Picker } from '@react-native-picker/picker';
 import provincias from '../utils/provincias';
 import PropTypes from 'prop-types';
 import reloadIcon from '../assets/iconReload.png';
-import iconBañoPublico from '../assets/iconBañoPublico.png';
-import iconPrimerosAuxilios from '../assets/iconPrimerosAuxilios.png';
-import iconPuntoVioleta from '../assets/iconPuntoVioleta.png';
 import styles from '../styles/MapMultiScreenStyles';
 
 // Componente personalizado para el marcador con el número de dorsal dentro de un círculo
@@ -42,6 +39,7 @@ export default function MapMultiScreen({ route, navigation }) {
   const mapRef = useRef(null);
   const [showServices, setShowServices] = useState(false);
   const [serviceLocations, setServiceLocations] = useState([]);
+  const [serviceTypes, setServiceTypes] = useState([]);
 
   const fetchData = async () => {
     await fetchUserLocations();
@@ -95,6 +93,10 @@ export default function MapMultiScreen({ route, navigation }) {
     }
   }, [selectedDorsal, userLocations]);
 
+  useEffect(() => {
+    fetchServiceTypes();
+  }, []);
+
   const fetchUserLocations = async () => {
     try {
       const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_location.php?code=${event.code}`);
@@ -141,6 +143,16 @@ export default function MapMultiScreen({ route, navigation }) {
       setServiceLocations(locations);
     } catch (error) {
       console.error('Error al obtener las ubicaciones de los servicios:', error);
+    }
+  };
+
+  const fetchServiceTypes = async () => {
+    try {
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_service_type.php`);
+      const data = await response.json();
+      setServiceTypes(data);
+    } catch (error) {
+      console.error('Error al obtener los tipos de servicios:', error);
     }
   };
 
@@ -301,16 +313,12 @@ export default function MapMultiScreen({ route, navigation }) {
     return mapPolylines;
   };
 
-  const getMarkerIcon = (type) => {
-    switch (type) {
-      case "Baño Público":
-        return iconBañoPublico;
-      case "Punto de Primeros Auxilios":
-        return iconPrimerosAuxilios;
-      case "Punto Violeta":
-        return iconPuntoVioleta;
-      default:
-        return null;
+  const getMarkerIcon = (service, serviceTypes) => {
+    const serviceType = serviceTypes.find(type => type.id === service.type);
+    if (serviceType && serviceType.image) {
+      return { uri: serviceType.image };
+    } else {
+      return null;
     }
   };
 
@@ -392,7 +400,7 @@ export default function MapMultiScreen({ route, navigation }) {
             )}
             {/* Marcadores de los servicios */}
             {showServices && serviceLocations.map((service, index) => {
-              const icon = getMarkerIcon(service.type);
+              const icon = getMarkerIcon(service, serviceTypes);
               return (
         	    <Marker
                   key={index}

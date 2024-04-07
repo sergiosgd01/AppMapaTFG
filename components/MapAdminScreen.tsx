@@ -5,9 +5,7 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import provincias from '../utils/provincias';
 import PropTypes from 'prop-types';
 import reloadIcon from '../assets/iconReload.png';
-import iconBañoPublico from '../assets/iconBañoPublico.png';
-import iconPrimerosAuxilios from '../assets/iconPrimerosAuxilios.png';
-import iconPuntoVioleta from '../assets/iconPuntoVioleta.png';
+import iconEdit from '../assets/iconEdit.png';
 import styles from '../styles/MapAdminScreenStyles';
 
 export default function MapScreen({ route, navigation }) {
@@ -23,7 +21,6 @@ export default function MapScreen({ route, navigation }) {
   const mapViewRef = useRef(null);
   const [selectedCoordinate, setSelectedCoordinate] = useState(null);
   const [modalServiceVisible, setModalServiceVisible] = useState(false);
-  const [serviceType, setServiceType] = useState('');
   const [editingService, setEditingService] = useState(false);
   const [editingRoute, setEditingRoute] = useState(false);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
@@ -45,6 +42,8 @@ export default function MapScreen({ route, navigation }) {
   const [enteredCode, setEnteredCode] = useState<string>('');
   const [showDeleteEventModal, setShowDeleteEventModal] = useState(false);
   const [enteredText, setEnteredText] = useState('');
+  const [serviceTypes, setServiceTypes] = useState([]);
+  const [selectedServiceType, setSelectedServiceType] = useState('');
 
   const fetchData = async () => {
     await fetchLocationMarkers();
@@ -105,6 +104,10 @@ export default function MapScreen({ route, navigation }) {
     };
   }, []); // Este efecto se ejecutará solo una vez, al montar el componente
 
+  useEffect(() => {
+    fetchServiceTypes();
+  }, []);
+
   const fetchLocationMarkers = async () => {
     try {
       const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_location.php?code=${event.code}`);
@@ -141,6 +144,16 @@ export default function MapScreen({ route, navigation }) {
       setServiceLocations(locations);
     } catch (error) {
       console.error('Error al obtener las ubicaciones de los servicios:', error);
+    }
+  };
+
+  const fetchServiceTypes = async () => {
+    try {
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_service_type.php`);
+      const data = await response.json();
+      setServiceTypes(data);
+    } catch (error) {
+      console.error('Error al obtener los tipos de servicios:', error);
     }
   };
 
@@ -286,7 +299,6 @@ export default function MapScreen({ route, navigation }) {
 
   const deletePointRoute = async() => {
 	try {
-	  console.log(selectedRoutePoint.id);
 	  await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_route.php?id=${selectedRoutePoint.id}`, {
 	    method: 'POST',
 	  });
@@ -339,11 +351,12 @@ export default function MapScreen({ route, navigation }) {
 
   const createService = async () => {
     try {
+      console.log('selectedServiceType', selectedServiceType);
       const formData = new URLSearchParams();
       formData.append('code', event.code);
       formData.append('latitude', selectedCoordinate.latitude);
       formData.append('longitude', selectedCoordinate.longitude,);
-      formData.append('type', serviceType);
+      formData.append('type', selectedServiceType);
 
       await fetch('https://pruebaproyectouex.000webhostapp.com/proyectoTFG/insertar_service.php', {
         method: 'POST',
@@ -458,10 +471,8 @@ export default function MapScreen({ route, navigation }) {
       const data = await response.json();
 
       if (data.success) {
-        // Cierra el modal de eliminación del evento
         setShowDeleteEventModal(false);
-        // Sal de la pantalla actual
-        navigation.goBack(); // Esto te llevará a la pantalla anterior
+        navigation.goBack();
       } else {
         console.error('Error al eliminar el evento:', data.error);
       }
@@ -469,7 +480,6 @@ export default function MapScreen({ route, navigation }) {
       console.error('Error al eliminar el evento:', error);
     }
   };
-
 
   const calculateInitialRegion = (markers, lat = null, lng = null) => {
 	let region = {
@@ -514,16 +524,12 @@ export default function MapScreen({ route, navigation }) {
     longitude: parseFloat(marker.longitude),
   }));
 
-  const getMarkerIcon = (type) => {
-    switch (type) {
-      case "Baño Público":
-        return iconBañoPublico;
-      case "Punto de Primeros Auxilios":
-        return iconPrimerosAuxilios;
-      case "Punto Violeta":
-        return iconPuntoVioleta;
-      default:
-        return null;
+  const getMarkerIcon = (service, serviceTypes) => {
+    const serviceType = serviceTypes.find(type => type.id === service.type);
+    if (serviceType && serviceType.image) {
+      return { uri: serviceType.image };
+    } else {
+      return null;
     }
   };
 
@@ -545,9 +551,305 @@ export default function MapScreen({ route, navigation }) {
     }
   };
 
+  // Función para el modal de agregar servicio
+  const renderServiceModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalServiceVisible}
+      onRequestClose={() => {
+        setModalServiceVisible(!modalServiceVisible);
+      }}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Agregar nuevo servicio</Text>
+          <Picker
+            selectedValue={selectedServiceType}
+            style={{ height: 50, width: 200 }}
+            onValueChange={(itemValue) => setSelectedServiceType(itemValue)}
+          >
+            {serviceTypes.map((type, index) => (
+              <Picker.Item key={index} label={type.name} value={type.id} />
+            ))}
+          </Picker>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Agregar"
+              onPress={() => {
+                createService();
+                setModalServiceVisible(!modalServiceVisible);
+              }}
+            />
+            <Button
+              title="Cancelar"
+              onPress={() => setModalServiceVisible(!modalServiceVisible)}
+              color="red"
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de detalle del servicio
+  const renderServiceDetailModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalDeleteVisible}
+      onRequestClose={() => {
+        setModalDeleteVisible(!modalDeleteVisible);
+      }}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>Detalle del Servicio</Text>
+          {selectedService && (
+            <>
+              <View style={{ marginBottom: 10 }}>
+                <Text style={styles.detailText}>Tipo: {selectedService.type}</Text>
+                <Text style={styles.detailText}>Latitud: {selectedService.latitude}</Text>
+                <Text style={styles.detailText}>Longitud: {selectedService.longitude}</Text>
+			  </View>
+              <View style={styles.buttonContainer}>
+                <Button
+                  title="Eliminar"
+                  onPress={() => {
+                    deleteService();
+                  }}
+                  color="red"
+                />
+                <Button
+                  title="Cancelar"
+                  onPress={() => setModalDeleteVisible(false)}
+                />
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de eliminación de punto de ruta
+  const renderDeleteRoutePointModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalDeleteRouteVisible && editingRoute && !!selectedRoutePoint}
+      onRequestClose={() => {
+        setModalDeleteRouteVisible(false);
+      }}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Eliminar Punto de Ruta</Text>
+          <Text>¿Estás seguro de que deseas eliminar este punto de la ruta?</Text>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Eliminar"
+              onPress={() => {
+                deletePointRoute();
+                setModalDeleteRouteVisible(false);
+              }}
+              color="red"
+            />
+            <Button
+              title="Cancelar"
+              onPress={() => {
+                setModalDeleteRouteVisible(false);
+                setSelectedRoutePoint(null);
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de edición de nombre de evento
+  const renderEditEventNameModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalNameVisible}
+      onRequestClose={() => {
+        setModalNameVisible(!modalNameVisible);
+      }}
+    >
+      <View style={styles.modalView}>
+        <Text style={styles.modalTitle}>Editar Nombre del Evento</Text>
+        <TextInput
+          style={styles.input}
+          value={newEventName}
+          onChangeText={(text) => setNewEventName(text)}
+          maxLength={60}
+          placeholder="Nuevo Nombre"
+        />
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Guardar"
+            onPress={() => {
+              handleSaveName();
+            }}
+          />
+          <Button
+            title="Cancelar"
+            onPress={() => {
+              handleCancelEditName();
+            }}
+            color="red"
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de edición de fechas de evento
+  const renderEditEventDateModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalDateVisible}
+      onRequestClose={() => {
+        setModalDateVisible(!modalDateVisible);
+      }}
+    >
+      <View style={styles.modalView}>
+        <Text style={styles.modalTitle}>Editar Fechas del Evento</Text>
+        <View style={styles.inputContainer}>
+          <Text style={styles.labelText}>Fecha de Inicio:</Text>
+          <TextInput
+            style={styles.input}
+            value={newEventStartDate}
+            maxLength={19}
+            onChangeText={(text) => setNewEventStartDate(text)}
+            placeholder="Nueva Fecha de Inicio"
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.labelText}>Fecha Final:</Text>
+          <TextInput
+            style={styles.input}
+            value={newEventEndDate}
+            maxLength={19}
+            onChangeText={(text) => setNewEventEndDate(text)}
+            placeholder="Nueva Fecha Final"
+          />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Guardar"
+            onPress={() => {
+              handleCancelEditDate();
+            }}
+          />
+          <Button
+            title="Cancelar"
+            onPress={() => {
+              handleCancelEditDate();
+            }}
+            color="red"
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de inserción de código de evento
+  const renderEnterCodeModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showEnterCodeModal}
+      onRequestClose={hideEnterCodeModalHandler}
+    >
+      <View style={[styles.modalContainer, { paddingHorizontal: 20 }]}>
+        <View style={styles.modalContent}>
+          <Text style={styles.textModal}>Por seguridad, se debe introducir el código del evento para poder suspenderlo.</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setEnteredCode}
+            value={enteredCode}
+            keyboardType="numeric"
+            placeholder="Código del evento"
+          />
+          <View style={styles.modalButtons}>
+            <Button title="Aceptar" onPress={handleEnterCodeConfirmation} />
+            <Button title="Cancelar" onPress={hideEnterCodeModalHandler} color="red" />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de confirmación de cancelación de evento
+  const renderCancelReasonModal = () => (
+    <Modal
+      animationType="slide-up"
+      transparent={true}
+      visible={showCancelReasonModal}
+      onRequestClose={() => hideCancelModalHandler()}
+    >
+      <View style={[styles.modalContainer, { paddingHorizontal: 20 }]}>
+        <View style={styles.modalContent}>
+          <Text style={styles.textModal}>Por favor, ingrese el motivo de cancelación (máximo 200 caracteres):</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setCancelReason}
+            value={cancelReason}
+            placeholder="Motivo de cancelación"
+            maxLength={200}
+          />
+          <View style={styles.modalButtons}>
+            <Button title="Cancelar" onPress={() => cancelEvent(1)} color="red"/>
+            <Button title="Volver" onPress={() => hideCancelModalHandler()} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Función para el modal de eliminación de evento
+  const renderDeleteEventModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showDeleteEventModal}
+      onRequestClose={() => setShowDeleteEventModal(false)}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Para eliminar el evento, escriba "ELIMINAR" y presione Eliminar:</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setEnteredText}
+            value={enteredText}
+            placeholder="Escriba 'ELIMINAR' aquí"
+          />
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Eliminar"
+              onPress={deleteEvent}
+              disabled={enteredText !== 'ELIMINAR'}
+              color="red"
+            />
+			<Button
+              title="Volver"
+              onPress={() => {
+                setShowDeleteEventModal(false);
+                setEnteredText('');
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <View style={{ flex: 1 }}>
-      {/* Renderizado condicional de la vista de carga */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#000000" />
@@ -637,7 +939,7 @@ export default function MapScreen({ route, navigation }) {
 	        )}
             {/* Marcadores de los servicios */}
             {showServices && serviceLocations.map((service, index) => {
-              const icon = getMarkerIcon(service.type);
+              const icon = getMarkerIcon(service, serviceTypes);
               return (
                 <Marker
                   key={index}
@@ -652,9 +954,7 @@ export default function MapScreen({ route, navigation }) {
               );
             })}
           </MapView>
-          {/* Contenedor de botones */}
           <View style={styles.container}>
-            {/* Mensaje de evento cancelado */}
             {isEventCancelled && (
               <View style={styles.cancelledMessage}>
                 <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
@@ -666,39 +966,38 @@ export default function MapScreen({ route, navigation }) {
               </View>
             )}
             <View style={styles.header}>
-              <TouchableOpacity onPress={() => setModalNameVisible(true)}>
+              <TouchableOpacity onPress={() => setModalNameVisible(true)} style={styles.touchable}>
                 <Text style={styles.title}>{newEventName}</Text>
+                <Image source={iconEdit} style={styles.iconEdit} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setModalDateVisible(true)}>
+              <TouchableOpacity onPress={() => setModalDateVisible(true)} style={styles.touchable}>
                 <Text style={styles.title}>{`${formatDate(eventStartDate)} ${formatTime(eventStartDate)} - ${formatDate(eventEndDate)} ${formatTime(eventEndDate)}`}</Text>
+                <Image source={iconEdit} style={styles.iconEdit} />
               </TouchableOpacity>
             </View>
             <View style={styles.containerShow}>
-              {/* Botón de editar ruta */}
               <TouchableOpacity style={[styles.showRouteButton, editingRoute && styles.activeButton]} onPress={handleEditRoute}>
-                <Text style={styles.buttonText}>{editingRoute ? 'Terminar Edición de Ruta' : 'Editar Ruta'}</Text>
+                <Text style={styles.buttonText}>{editingRoute ? 'Finalizar Edición' : 'Editar Ruta'}</Text>
               </TouchableOpacity>
-              {/* Botón de editar servicios */}
               <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleEditServices}>
-                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Dejar de Editar Servicios' : 'Editar Servicios'}</Text>
+                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Finalizar Edición' : 'Editar Servicios'}</Text>
               </TouchableOpacity>
             </View>
 			<View style={styles.containerCancelDelete}>
               <TouchableOpacity
-                style={styles.showRouteButton}
+                style={[styles.cancelEventButton, styles.activeButton]}
                 onPress={() => isEventCancelled ? cancelEvent(0) : setShowEnterCodeModal(true)}
                 >
                 <Text style={styles.buttonText}>{isEventCancelled ? 'Reanudar evento' : 'Suspender evento'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.showServicesButton, showServices && styles.activeButton]}
+                style={[styles.deleteEventButton, styles.activeButton]}
                 onPress={showDeleteEventModalHandler}
               >
                 <Text style={[styles.buttonText, {color: 'red'}]}>Eliminar Evento</Text>
               </TouchableOpacity>
             </View>
           </View>
-          {/* Botón "Insertar" para insertar puntos */}
           {editingRoute && (
             <View style={styles.insertButtonContainer}>
               <Button
@@ -706,258 +1005,18 @@ export default function MapScreen({ route, navigation }) {
                 onPress={() => {
                   insertPointRoute();
                 }}
+                color="#6C21DC"
               />
             </View>
           )}
-          {/* Modal para agregar servicio */}
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalServiceVisible}
-            onRequestClose={() => {
-              setModalServiceVisible(!modalServiceVisible);
-            }}
-          >
-            <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Text style={styles.modalText}>Agregar nuevo servicio</Text>
-                {/* Selector de tipo de servicio */}
-                <Picker
-                  selectedValue={serviceType}
-                  style={{ height: 50, width: 200 }}
-                  onValueChange={(itemValue) => setServiceType(itemValue)}
-                >
-                  <Picker.Item label="Punto de Primeros Auxilios" value="Punto de Primeros Auxilios" />
-                  <Picker.Item label="Punto Violeta" value="Punto Violeta" />
-                  <Picker.Item label="Baño Público" value="Baño Público" />
-                </Picker>
-                {/* Botones para cancelar y agregar servicio */}
-                <View style={styles.buttonContainer}>
-                  <Button
-                    title="Cancelar"
-                    onPress={() => setModalServiceVisible(!modalServiceVisible)}
-                  />
-                  <View style={{ width: 20 }} />
-                  <Button
-                    title="Agregar"
-                    onPress={() => {
-                      createService();
-                      setModalServiceVisible(!modalServiceVisible);
-                    }}
-                  />
-                </View>
-              </View>
-            </View>
-          </Modal>
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalDeleteVisible}
-            onRequestClose={() => {
-              setModalDeleteVisible(!modalDeleteVisible);
-            }}
-          >
-            <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Text style={styles.modalText}>Detalle del Servicio</Text>
-                {selectedService && (
-                  <>
-                    <Text>Tipo: {selectedService.type}</Text>
-                    <Text>Latitud: {selectedService.latitude}</Text>
-                    <Text>Longitud: {selectedService.longitude}</Text>
-                    <View style={styles.buttonContainer}>
-                      <Button
-                        title="Cancelar"
-                        onPress={() => setModalDeleteVisible(false)}
-                      />
-                      <View style={{ width: 20 }} />
-                      <Button
-                        title="Eliminar"
-                        onPress={() => {
-                          deleteService();
-                        }}
-                      />
-                    </View>
-                  </>
-                )}
-              </View>
-            </View>
-          </Modal>
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalDeleteRouteVisible && editingRoute && !!selectedRoutePoint}
-            onRequestClose={() => {
-              setModalDeleteRouteVisible(false);
-            }}
-          >
-            <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Text style={styles.modalText}>Eliminar Punto de Ruta</Text>
-                <Text>¿Estás seguro de que deseas eliminar este punto de la ruta?</Text>
-                <View style={styles.buttonContainer}>
-                  <Button
-                    title="Cancelar"
-                    onPress={() => {
-                      setModalDeleteRouteVisible(false);
-                      setSelectedRoutePoint(null);
-                    }}
-                  />
-                  <View style={{ width: 20 }} />
-                  <Button
-                    title="Eliminar"
-                    onPress={() => {
-                      deletePointRoute();
-                      setModalDeleteRouteVisible(false);
-                    }}
-                  />
-                </View>
-              </View>
-            </View>
-          </Modal>
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalNameVisible}
-            onRequestClose={() => {
-              setModalNameVisible(!modalNameVisible);
-            }}
-          >
-            <View style={styles.modalView}>
-              <Text style={styles.modalTitle}>Editar Nombre del Evento</Text>
-              <TextInput
-                style={styles.input}
-                value={newEventName}
-                onChangeText={(text) => setNewEventName(text)}
-                maxLength={60}
-                placeholder="Nuevo Nombre"
-              />
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={handleCancelEditName}>
-                  <Text style={styles.modalButton}>Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleSaveName}>
-                  <Text style={styles.modalButton}>Guardar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalDateVisible}
-            onRequestClose={() => {
-              setModalDateVisible(!modalDateVisible);
-            }}
-          >
-            <View style={styles.modalView}>
-              <Text style={styles.modalTitle}>Editar Fechas del Evento</Text>
-              <View style={styles.inputContainer}>
-                <Text>Fecha de Inicio:</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newEventStartDate}
-                  maxLength={19}
-                  onChangeText={(text) => setNewEventStartDate(text)}
-                  placeholder="Nueva Fecha de Inicio"
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Text>Fecha Final:</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newEventEndDate}
-                  maxLength={19}
-                  onChangeText={(text) => setNewEventEndDate(text)}
-                  placeholder="Nueva Fecha Final"
-                />
-              </View>
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={handleCancelEditDate}>
-                  <Text style={styles.modalButton}>Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleSaveDate}>
-                  <Text style={styles.modalButton}>Guardar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-		  <Modal
-	        animationType="slide"
-	        transparent={true}
-	        visible={showEnterCodeModal}
-	        onRequestClose={hideEnterCodeModalHandler}
-	      >
-	        <View style={[styles.modalContainer, { paddingHorizontal: 20 }]}>
-	          <View style={styles.modalContent}>
-	            <Text style={styles.textModal}>Por seguridad, se debe introducir el código del evento para poder suspenderlo.</Text>
-	            <TextInput
-	              style={styles.input}
-	              onChangeText={setEnteredCode}
-	              value={enteredCode}
-	              keyboardType="numeric"
-	              placeholder="Código del evento"
-	            />
-	            <View style={styles.modalButtons}>
-	              <Button title="Aceptar" onPress={handleEnterCodeConfirmation} />
-	              <Button title="Cancelar" onPress={hideEnterCodeModalHandler} />
-	            </View>
-	          </View>
-	        </View>
-	      </Modal>
-          <Modal
-            animationType="slide-up"
-            transparent={true}
-            visible={showCancelReasonModal}
-            onRequestClose={() => hideCancelModalHandler()}
-          >
-            <View style={[styles.modalContainer, { paddingHorizontal: 20 }]}>
-              <View style={styles.modalContent}>
-                <Text style={styles.textModal}>Por favor, ingrese el motivo de cancelación (máximo 200 caracteres):</Text>
-                <TextInput
-                  style={styles.input}
-                  onChangeText={setCancelReason}
-                  value={cancelReason}
-                  placeholder="Motivo de cancelación"
-                  maxLength={200}
-                />
-                <View style={styles.modalButtons}>
-                  <Button title="CANCELAR" onPress={() => cancelEvent(1)} color="red"/>
-                  <Button title="Volver" onPress={() => hideCancelModalHandler()} />
-                </View>
-              </View>
-            </View>
-          </Modal>
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={showDeleteEventModal}
-            onRequestClose={() => setShowDeleteEventModal(false)}
-          >
-            <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Text style={styles.modalText}>Para eliminar el evento, escriba "ELIMINAR" y presione Eliminar:</Text>
-                <TextInput
-                  style={styles.input}
-                  onChangeText={setEnteredText}
-                  value={enteredText}
-                  placeholder="Escriba 'ELIMINAR' aquí"
-                />
-                <View style={styles.buttonContainer}>
-                  <Button
-                    title="Cancelar"
-                    onPress={() => setShowDeleteEventModal(false)}
-                  />
-                  <View style={{ width: 20 }} />
-                  <Button
-                    title="Eliminar"
-                    onPress={deleteEvent}
-                    disabled={enteredText !== 'ELIMINAR'}
-                  />
-                </View>
-              </View>
-            </View>
-          </Modal>
+          {renderServiceModal()}
+          {renderServiceDetailModal()}
+          {renderDeleteRoutePointModal()}
+          {renderEditEventNameModal()}
+          {renderEditEventDateModal()}
+          {renderEnterCodeModal()}
+          {renderCancelReasonModal()}
+          {renderDeleteEventModal()}
         </View>
       )}
     </View>

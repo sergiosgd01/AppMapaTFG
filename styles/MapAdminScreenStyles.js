@@ -1,6 +1,6 @@
 const MapScreenStyles = {
   container: {
-    height: 150,
+    height: 180,
     alignItems: 'center',
     bottom: 0,
   },
@@ -10,11 +10,21 @@ const MapScreenStyles = {
     top: 0,
     justifyContent: 'center',
   },
+  touchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconEdit: {
+    width: 18,
+    height: 18,
+    marginLeft: 5,
+  },
   containerShow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 5,
   },
   activeButton: {
     opacity: 0.8,
@@ -22,11 +32,6 @@ const MapScreenStyles = {
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
   },
   showRouteButton: {
     alignItems: 'center',
@@ -48,6 +53,38 @@ const MapScreenStyles = {
     marginLeft: 10,
     width: 160,
   },
+  containerCancelDelete: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  cancelEventButton: {
+    alignItems: 'center',
+    backgroundColor: 'red',
+    borderRadius: 5,
+    height: 40,
+    justifyContent: 'center',
+    marginRight: 10,
+    width: 160,
+  },
+  deleteEventButton: {
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderColor: 'red',
+    borderRadius: 5,
+    borderWidth: 2,
+    height: 40,
+    justifyContent: 'center',
+    marginLeft: 10,
+    width: 160,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -60,7 +97,7 @@ const MapScreenStyles = {
     zIndex: 1,
     padding: 10,
     alignItems: 'center',
-    top: 0,
+    top: -50,
     height: 50,
   },
   cancelledText: {
@@ -115,11 +152,44 @@ const MapScreenStyles = {
     paddingHorizontal: 20,
     marginTop: 10,
   },
-  containerCancelDelete: {
-    flex: 1,
+  modalButtons: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  textModal: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  labelText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  modalContainer: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  detailText: {
+    fontSize: 16,
+    marginBottom: 5,
   },
 };
 
