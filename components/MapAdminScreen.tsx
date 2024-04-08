@@ -250,7 +250,6 @@ export default function MapScreen({ route, navigation }) {
   const insertPointRoute = async () => {
     try {
       for (const point of routeCoordinates) {
-        console.log(point);
         const formData = new URLSearchParams();
         formData.append('code', event.code);
         formData.append('latitude', point.latitude);
@@ -291,7 +290,6 @@ export default function MapScreen({ route, navigation }) {
 
   const deletePointRoute = async() => {
 	try {
-	  console.log('eliminado punto de ruta:', selectedRoutePoint);
 	  await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_route.php?id=${selectedRoutePoint.id}`, {
 	    method: 'POST',
 	  });
@@ -336,7 +334,6 @@ export default function MapScreen({ route, navigation }) {
 
   const createService = async () => {
     try {
-      console.log('selectedServiceType', selectedServiceType);
       const formData = new URLSearchParams();
       formData.append('code', event.code);
       formData.append('latitude', selectedCoordinate.latitude);
@@ -392,9 +389,8 @@ export default function MapScreen({ route, navigation }) {
       const formData = new FormData();
       formData.append('code', event.code);
       formData.append('action', action);
-      if(action == 1) {
-        formData.append('cancelReason', cancelReason.toString());
-      }
+      formData.append('cancelReason', cancelReason.toString());
+
       const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/cancel_event.php`, {
         method: 'POST',
         body: formData
@@ -435,7 +431,12 @@ export default function MapScreen({ route, navigation }) {
       hideEnterCodeModalHandler();
       setShowCancelReasonModal(true);
     } else {
-      alert("El código introducido no coincide con el código del evento actual. Por favor, inténtalo de nuevo.");
+      Alert.alert(
+        'Código incorrecto',
+        'El código introducido no coincide con el código del evento actual. Por favor, inténtalo de nuevo.',
+        [{ text: 'OK' }],
+        { cancelable: false }
+      );
     }
   };
 
