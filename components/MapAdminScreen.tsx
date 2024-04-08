@@ -265,11 +265,20 @@ export default function MapScreen({ route, navigation }) {
       }
       fetchRouteMarkers();
       setEditingRoute(false);
-      Alert.alert(
-        'Puntos insertados',
-        'Los puntos se han insertado correctamente en la base de datos.',
-        [{ text: 'OK' }]
-      );
+      if (routeCoordinates.length > 0) {
+		Alert.alert(
+          'Puntos insertados',
+          'Los puntos se han insertado correctamente en la base de datos.',
+          [{ text: 'OK' }]
+        );
+      }
+      else {
+		Alert.alert(
+		  'Error',
+		  'No se han insertado puntos en la base de datos. Por favor, añade al menos un punto.',
+		  [{ text: 'OK' }]
+		);
+	  }
       setEditingRoute(true);
     } catch (error) {
       Alert.alert(

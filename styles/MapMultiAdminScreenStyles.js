@@ -85,6 +85,15 @@ const MapMultiAdminScreenStyles = {
     marginLeft: 10,
     width: 160,
   },
+  pickerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  pickerDorsal: {
+    height: 40,
+    width: 160,
+  },
   calloutContainer: {
     alignItems: 'center',
     backgroundColor: 'white',

@@ -63,6 +63,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   const [showDeleteEventModal, setShowDeleteEventModal] = useState(false);
   const [enteredText, setEnteredText] = useState('');
   const [selectedServiceType, setSelectedServiceType] = useState('1');
+  const [mapCentered, setMapCentered] = useState(false);
 
   const fetchData = async () => {
     await fetchUserLocations();
@@ -89,31 +90,20 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   }, []);
 
   useEffect(() => {
-    if (userLocations.length > 0) {
-      if (selectedDorsal === allOption) {
-        // Muestra la última ubicación recibida de todos los dorsales
-        const lastLocation = userLocations[userLocations.length - 1];
-        mapRef.current.animateToRegion({
-          latitude: parseFloat(lastLocation.latitude),
-          longitude: parseFloat(lastLocation.longitude),
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }, 1000);
-      } else {
-        // Muestra la ubicación del dorsal seleccionado
-        const selectedLocations = userLocations.filter(location => location.dorsal === selectedDorsal);
-        const lastLocation = selectedLocations[selectedLocations.length - 1];
-        if (lastLocation) {
-          mapRef.current.animateToRegion({
-            latitude: parseFloat(lastLocation.latitude),
-            longitude: parseFloat(lastLocation.longitude),
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }, 1000);
-        }
-      }
+    if (!mapCentered && userLocations.length > 0) {
+      // Calcula la última ubicación
+      const lastLocation = userLocations[userLocations.length - 1];
+      // Centra el mapa en la última ubicación
+      mapRef.current.animateToRegion({
+        latitude: parseFloat(lastLocation.latitude),
+        longitude: parseFloat(lastLocation.longitude),
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 1000);
+      // Marca que el mapa se ha centrado
+      setMapCentered(true);
     }
-  }, [selectedDorsal, userLocations]);
+  }, [userLocations, mapCentered]);
 
   useEffect(() => {
     if (editingRoute) {
@@ -282,7 +272,6 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   const insertPointRoute = async () => {
     try {
       for (const point of routeCoordinates) {
-        console.log(point);
         const formData = new URLSearchParams();
         formData.append('code', event.code);
         formData.append('latitude', point.latitude);
@@ -297,11 +286,21 @@ export default function MapMultiAdminScreen({ route, navigation }) {
       }
       fetchRouteMarkers();
       setEditingRoute(false);
-      Alert.alert(
-        'Puntos insertados',
-        'Los puntos se han insertado correctamente en la base de datos.',
-        [{ text: 'OK' }]
-      );
+      if (routeCoordinates.length > 0) {
+		Alert.alert(
+          'Puntos insertados',
+          'Los puntos se han insertado correctamente en la base de datos.',
+          [{ text: 'OK' }]
+        );
+      }
+      else {
+		Alert.alert(
+		  'Error',
+		  'No se han insertado puntos en la base de datos. Por favor, añade al menos un punto.',
+		  [{ text: 'OK' }]
+		);
+	  }
+
       setEditingRoute(true);
     } catch (error) {
       Alert.alert(
@@ -547,13 +546,6 @@ export default function MapMultiAdminScreen({ route, navigation }) {
       const dorsalLocations = userLocations.filter(location => location.dorsal === selectedDorsal);
       const latestLocation = dorsalLocations[dorsalLocations.length - 1];
       if (latestLocation) {
-        const region = {
-          latitude: parseFloat(latestLocation.latitude),
-          longitude: parseFloat(latestLocation.longitude),
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        };
-        mapRef.current.animateToRegion(region, 1000);
 
         return (
           <CustomMarker
@@ -593,13 +585,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
       const latestLocations = userLocations.filter(location => uniqueDorsals.includes(location.dorsal));
       const latestOverallLocation = latestLocations[latestLocations.length - 1];
       if (latestOverallLocation) {
-        const region = {
-          latitude: parseFloat(latestOverallLocation.latitude),
-          longitude: parseFloat(latestOverallLocation.longitude),
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        };
-        mapRef.current.animateToRegion(region, 1000);
+
       }
 
       return markers;
@@ -1073,6 +1059,17 @@ export default function MapMultiAdminScreen({ route, navigation }) {
               </TouchableOpacity>
             </View>
           </View>
+	      <View style={styles.pickerContainer}>
+		    <Picker
+		      selectedValue={selectedDorsal}
+    		  style={styles.pickerDorsal}
+		      onValueChange={(itemValue) => setSelectedDorsal(itemValue)}
+		    >
+		      {allDorsals.map((dorsal, index) => (
+		        <Picker.Item key={index} label={dorsal} value={dorsal} />
+		      ))}
+		    </Picker>
+		  </View>
           {editingRoute && (
             <View style={styles.insertButtonContainer}>
               <Button
