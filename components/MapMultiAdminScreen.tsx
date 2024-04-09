@@ -64,6 +64,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   const [enteredText, setEnteredText] = useState('');
   const [selectedServiceType, setSelectedServiceType] = useState('1');
   const [mapCentered, setMapCentered] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchData = async () => {
     await fetchUserLocations();
@@ -181,6 +182,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   const updateNameEvent = async() => {
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append('id', event.id);
       formData.append('name', newEventName);
@@ -188,6 +190,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
         method: 'POST',
         body: formData
       });
+      setLoading(false);
       Alert.alert(
 		'Nombre actualizado',
 		'El nombre del evento se ha actualizado correctamente.',
@@ -195,6 +198,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 	  );
       setNewEventName(newEventName);
 	} catch (error) {
+	  setLoading(false);
 	  Alert.alert(
 		'Error',
 		'Se produjo un error al intentar actualizar el nombre. Por favor, inténtalo de nuevo más tarde.',
@@ -216,6 +220,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   const updateDateEvent = async () => {
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append('id', event.id);
       formData.append('startDate', newEventStartDate);
@@ -224,7 +229,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
         method: 'POST',
         body: formData
       });
-
+	  setLoading(false);
       if (response.ok) {
         const responseData = await response.json();
         if (responseData) {
@@ -243,6 +248,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
         throw new Error('Error al actualizar las fechas.');
       }
     } catch (error) {
+      setLoading(false);
       setNewEventEndDate(event.endDate);
       setNewEventStartDate(event.startDate);
       Alert.alert(
@@ -268,6 +274,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   const insertPointRoute = async () => {
     try {
+      setLoading(true);
       for (const point of routeCoordinates) {
         const formData = new URLSearchParams();
         formData.append('code', event.code);
@@ -281,6 +288,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 	      body: formData.toString(),
 	    });
       }
+      setLoading(false);
       fetchRouteMarkers();
       setEditingRoute(false);
       if (routeCoordinates.length > 0) {
@@ -300,6 +308,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
       setEditingRoute(true);
     } catch (error) {
+      setLoading(false);
       Alert.alert(
         'Error',
         'Se produjo un error al intentar insertar los puntos en la base de datos. Por favor, inténtalo de nuevo más tarde.',
@@ -310,13 +319,16 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   const deletePointRoute = async() => {
 	try {
+	  setLoading(true);
 	  await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_route.php?id=${selectedRoutePoint.id}`, {
 	    method: 'POST',
 	  });
+	  setLoading(false);
       fetchRouteMarkers();
       setModalDeleteVisible(false);
       setSelectedRoutePoint(null);
 	} catch (error) {
+	  setLoading(false);
       console.error('Error al eliminar el punto de la ruta:', error);
 	  Alert.alert(
 		'Error',
@@ -354,6 +366,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   const createService = async () => {
     try {
+      setLoading(true);
       const formData = new URLSearchParams();
       formData.append('code', event.code);
       formData.append('latitude', selectedCoordinate.latitude);
@@ -367,11 +380,11 @@ export default function MapMultiAdminScreen({ route, navigation }) {
         },
         body: formData.toString(),
       });
-
+	  setLoading(false);
       setSelectedCoordinate(null);
-
       fetchServiceLocations();
     } catch (error) {
+      setLoading(false);
       console.error('Error al crear el servicio:', error);
       Alert.alert(
         'Error',
@@ -383,6 +396,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   const deleteService = async() => {
     try {
+      setLoading(true);
       await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_service.php?id=${selectedService.id}`, {
         method: 'POST',
       });
@@ -391,10 +405,12 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 		'El servicio se ha eliminado correctamente.',
 		[{ text: 'OK' }]
 	  );
+	  setLoading(false);
       fetchServiceLocations();
       setModalDeleteVisible(false);
       setSelectedService(null);
 	} catch (error) {
+	  setLoading(false);
       console.error('Error al eliminar el servicio:', error);
 	  Alert.alert(
 		'Error',
@@ -406,6 +422,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   const cancelEvent = async (action: number) => {
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append('code', event.code);
       formData.append('action', action);
@@ -416,6 +433,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
         body: formData
       });
       const data = await response.text();
+      setLoading(false);
       if (action === 1) {
         hideCancelModalHandler();
         setIsEventCancelled(true);
@@ -423,6 +441,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
         setIsEventCancelled(false);
       }
     } catch (error) {
+      setLoading(false);
       console.error('Error al cancelar el evento:', error);
     }
   };
@@ -967,14 +986,25 @@ export default function MapMultiAdminScreen({ route, navigation }) {
                   lineDashPattern={[5, 10]}
                 />
                 {routeMarkers.map((marker, index) => {
-	              return (
-	                <Marker
-	                  key={index}
-	                  coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
-	                  pinColor={'red'}
-	                  onPress={() => handleRoutePress(marker)}
-	                />
-	              );
+	              if (index === 0) {
+                    return (
+                      <Marker
+                        key={index}
+                        coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+                        pinColor={'green'}
+                        onPress={() => handleRoutePress(marker)}
+                      />
+                    );
+                  } else {
+                    return (
+                      <Marker
+                        key={index}
+                        coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
+                        pinColor={'red'}
+                        onPress={() => handleRoutePress(marker)}
+                      />
+                    );
+                  }
 	            })}
               </>
             )}
@@ -992,6 +1022,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 	                  key={index}
 	                  coordinate={{ latitude: parseFloat(marker.latitude), longitude: parseFloat(marker.longitude) }}
 	                  pinColor={'red'}
+	                  onPress={() => setRouteCoordinates(routeCoordinates.filter((_, i) => i !== index))}
 	                />
 	              );
 	            })}
@@ -1077,7 +1108,13 @@ export default function MapMultiAdminScreen({ route, navigation }) {
                   insertPointRoute();
                 }}
                 color="#6C21DC"
+                disabled={loading}
               />
+            </View>
+          )}
+          {loading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#000000" />
             </View>
           )}
           {renderServiceModal()}

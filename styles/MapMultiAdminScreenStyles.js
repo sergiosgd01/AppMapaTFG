@@ -1,3 +1,5 @@
+import { StyleSheet } from 'react-native';
+
 const MapMultiAdminScreenStyles = {
   container: {
     height: 180,
@@ -131,8 +133,14 @@ const MapMultiAdminScreenStyles = {
     fontWeight: 'bold',
   },
   spinnerContainer: {
+    alignItems: 'center',
     flex: 1,
-    justifyContent: "center"
+    justifyContent: 'center',
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cancelledMessage: {
     backgroundColor: 'rgba(255, 0, 0, 0.7)',

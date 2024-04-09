@@ -1,3 +1,5 @@
+import { StyleSheet } from 'react-native';
+
 const MapScreenStyles = {
   container: {
     height: 180,
@@ -85,10 +87,15 @@ const MapScreenStyles = {
     marginLeft: 10,
     width: 160,
   },
-  loadingContainer: {
+  loadingContainerMap: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cancelledMessage: {
     backgroundColor: 'rgba(255, 0, 0, 0.7)',
