@@ -1067,11 +1067,23 @@ export default function MapMultiAdminScreen({ route, navigation }) {
               </TouchableOpacity>
             </View>
             <View style={styles.containerShow}>
-              <TouchableOpacity style={[styles.showRouteButton, editingRoute && styles.activeButton]} onPress={handleEditRoute}>
-                <Text style={styles.buttonText}>{editingRoute ? 'Finalizar Edición' : 'Editar Ruta'}</Text>
+              <TouchableOpacity
+                style={[styles.showRouteButton, editingRoute && styles.activeButton, loading && styles.disabledButton]}
+                onPress={loading ? undefined : handleEditRoute}
+                disabled={loading}
+              >
+                <Text style={styles.buttonText}>
+                  {editingRoute ? 'Finalizar Edición' : 'Editar Ruta'}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleEditServices}>
-                <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Finalizar Edición' : 'Editar Servicios'}</Text>
+              <TouchableOpacity
+                style={[styles.showServicesButton, showServices && styles.activeButton, loading && styles.disabledButton]}
+                onPress={loading ? undefined : handleEditServices}
+                disabled={loading}
+              >
+                <Text style={[styles.buttonText, {color: loading ? 'gray' : '#6C21DC'}]}>
+                  {showServices ? 'Finalizar Edición' : 'Editar Servicios'}
+                </Text>
               </TouchableOpacity>
             </View>
 			<View style={styles.containerCancelDelete}>
