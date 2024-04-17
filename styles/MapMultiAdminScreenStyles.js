@@ -33,9 +33,6 @@ const MapMultiAdminScreenStyles = {
     justifyContent: 'center',
     marginTop: 5,
   },
-  activeButton: {
-    opacity: 0.8,
-  },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',

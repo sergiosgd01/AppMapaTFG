@@ -1068,16 +1068,16 @@ export default function MapMultiAdminScreen({ route, navigation }) {
             </View>
             <View style={styles.containerShow}>
               <TouchableOpacity
-                style={[styles.showRouteButton, editingRoute && styles.activeButton, loading && styles.disabledButton]}
+                style={[styles.showRouteButton, loading && styles.disabledButton]}
                 onPress={loading ? undefined : handleEditRoute}
                 disabled={loading}
               >
-                <Text style={styles.buttonText}>
+                <Text style={[styles.buttonText, {color: loading ? 'gray' : '#ffffff'}]}>
                   {editingRoute ? 'Finalizar Edición' : 'Editar Ruta'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.showServicesButton, showServices && styles.activeButton, loading && styles.disabledButton]}
+                style={[styles.showServicesButton, loading && styles.disabledButton]}
                 onPress={loading ? undefined : handleEditServices}
                 disabled={loading}
               >
@@ -1088,13 +1088,13 @@ export default function MapMultiAdminScreen({ route, navigation }) {
             </View>
 			<View style={styles.containerCancelDelete}>
               <TouchableOpacity
-                style={[styles.cancelEventButton, styles.activeButton]}
+                style={styles.cancelEventButton}
                 onPress={() => isEventCancelled ? cancelEvent(0) : setShowEnterCodeModal(true)}
                 >
                 <Text style={styles.buttonText}>{isEventCancelled ? 'Reanudar evento' : 'Suspender evento'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.deleteEventButton, styles.activeButton]}
+                style={styles.deleteEventButton}
                 onPress={showDeleteEventModalHandler}
               >
                 <Text style={[styles.buttonText, {color: 'red'}]}>Eliminar Evento</Text>
