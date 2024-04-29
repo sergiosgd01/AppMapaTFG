@@ -446,6 +446,16 @@ export default function MapMultiAdminScreen({ route, navigation }) {
     }
   };
 
+  const handleCancelEvent = () => {
+    setLoading(true);
+    if (isEventCancelled) {
+      cancelEvent(0);
+    } else {
+      setShowEnterCodeModal(true);
+    }
+    setLoading(false);
+  };
+
   const hideCancelModalHandler = () => {
     setShowCancelReasonModal(false);
     setCancelReason('');
@@ -679,7 +689,10 @@ export default function MapMultiAdminScreen({ route, navigation }) {
           <View style={styles.buttonContainer}>
             <Button
               title="Cancelar"
-              onPress={() => setModalServiceVisible(!modalServiceVisible)}
+              onPress={() => {
+                setSelectedCoordinate(null);
+                setModalServiceVisible(!modalServiceVisible);
+              }}
               color="red"
             />
             <Button
@@ -1088,17 +1101,21 @@ export default function MapMultiAdminScreen({ route, navigation }) {
             </View>
 			<View style={styles.containerCancelDelete}>
               <TouchableOpacity
-                style={styles.cancelEventButton}
-                onPress={() => isEventCancelled ? cancelEvent(0) : setShowEnterCodeModal(true)}
-                >
-                <Text style={styles.buttonText}>{isEventCancelled ? 'Reanudar evento' : 'Suspender evento'}</Text>
+                style={[styles.cancelEventButton, loading && styles.disabledButton]}
+                onPress={loading ? undefined : handleCancelEvent}
+                disabled={loading}
+              >
+                <Text style={styles.buttonText}>
+                  {isEventCancelled ? 'Reanudar evento' : 'Suspender evento'}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.deleteEventButton}
-                onPress={showDeleteEventModalHandler}
-              >
-                <Text style={[styles.buttonText, {color: 'red'}]}>Eliminar Evento</Text>
-              </TouchableOpacity>
+	            style={[styles.deleteEventButton, loading && styles.disabledButton]}
+	            onPress={loading ? undefined : showDeleteEventModalHandler}
+	            disabled={loading}
+	          >
+	            <Text style={[styles.buttonText, { color: 'red' }]}>Eliminar Evento</Text>
+	          </TouchableOpacity>
             </View>
           </View>
 	      <View style={styles.pickerContainer}>
