@@ -83,7 +83,7 @@ export default function PastEventsScreen({ route, navigation }) {
         <View style={{ flex: 1 }}>
           <View style={styles.eventInfoContainer}>
             <Text numberOfLines={2} ellipsizeMode="tail" style={styles.eventName}>{item.name}</Text>
-            {item.cancelled == 1 && (
+            {item.status == 1 && (
               <View style={styles.cancelledMessage}>
                 <Text style={styles.cancelledText}>Evento cancelado</Text>
                 <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />

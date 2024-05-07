@@ -111,7 +111,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   }, [editingRoute]);
 
   useEffect(() => {
-    setIsEventCancelled(event.cancelled == 1);
+    setIsEventCancelled(event.status == 1);
     return () => {
       setRouteCoordinates([]);
     };

@@ -415,12 +415,21 @@ export default function MapMultiScreen({ route, navigation }) {
             })}
           </MapView>
           <View style={styles.container}>
-            {event.cancelled == 1 && (
+            {event.status == 1 && (
               <View style={styles.cancelledMessage}>
                 <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={styles.cancelledText}>Evento cancelado</Text>
                     <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+            {event.status == 2 && (
+              <View style={styles.cancelledMessage}>
+                <TouchableOpacity>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={styles.cancelledText}>Evento finalizado</Text>
                   </View>
                 </TouchableOpacity>
               </View>
