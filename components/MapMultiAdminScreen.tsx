@@ -56,6 +56,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   const [eventStartDate, setEventStartDate] = useState(event.startDate);
   const [eventEndDate, setEventEndDate] = useState(event.endDate);
   const [isEventCancelled, setIsEventCancelled] = useState<boolean>(false);
+  const [isEventFinished, setIsEventFinished] = useState<boolean>(false);
   const [showCancelReasonModal, setShowCancelReasonModal] = useState(false);
   const [cancelReason, setCancelReason] = useState<string>('');
   const [showEnterCodeModal, setShowEnterCodeModal] = useState<boolean>(false);
@@ -65,6 +66,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   const [selectedServiceType, setSelectedServiceType] = useState('1');
   const [mapCentered, setMapCentered] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('0');
 
   const fetchData = async () => {
     await fetchUserLocations();
@@ -91,6 +93,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
   }, []);
 
   useEffect(() => {
+    obtenerDatosEvento(event.code);
     if (!mapCentered && userLocations.length > 0) {
       const lastLocation = userLocations[userLocations.length - 1];
       mapRef.current.animateToRegion({
@@ -112,14 +115,32 @@ export default function MapMultiAdminScreen({ route, navigation }) {
 
   useEffect(() => {
     setIsEventCancelled(event.status == 1);
+    setIsEventFinished(event.status == 2);
     return () => {
       setRouteCoordinates([]);
     };
-  }, []);
+  }, []); // Este efecto se ejecutará solo una vez, al montar el componente
 
   useEffect(() => {
     fetchServiceTypes();
   }, []);
+
+  const obtenerDatosEvento = async (code: string) => {
+    try {
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_events_code.php?code=${code}`);
+      const data = await response.json();
+
+      if (data.length > 0) {
+        const jsonObject = data[0];
+        setIsEventCancelled(jsonObject.status == 1);
+        setIsEventFinished(jsonObject.status == 2);
+      } else {
+        console.error('No se encontraron eventos para el código proporcionado.');
+      }
+    } catch (error) {
+      console.error('Error al obtener datos de evento:', error);
+    }
+  };
 
   const fetchUserLocations = async () => {
     try {
@@ -432,13 +453,16 @@ export default function MapMultiAdminScreen({ route, navigation }) {
         method: 'POST',
         body: formData
       });
-      const data = await response.text();
       setLoading(false);
+      const data = await response.text();
       if (action === 1) {
         hideCancelModalHandler();
         setIsEventCancelled(true);
+      } else if (action === 2) {
+        setIsEventFinished(true);
       } else {
         setIsEventCancelled(false);
+        setIsEventFinished(false);
       }
     } catch (error) {
       setLoading(false);
@@ -451,6 +475,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
     if (isEventCancelled) {
       cancelEvent(0);
     } else {
+      setStatus('1');
       setShowEnterCodeModal(true);
     }
     setLoading(false);
@@ -475,7 +500,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
     setEnteredCode('');
   };
 
-  const handleEnterCodeConfirmation = () => {
+  const handleEnterCodeCancelConfirmation = () => {
     if (enteredCode === event.code) {
       hideEnterCodeModalHandler();
       setShowCancelReasonModal(true);
@@ -489,31 +514,29 @@ export default function MapMultiAdminScreen({ route, navigation }) {
     }
   };
 
-  const showDeleteEventModalHandler = () => {
-    setShowDeleteEventModal(true);
+  const handleEnterCodeFinishConfirmation = () => {
+    if (enteredCode === event.code) {
+      hideEnterCodeModalHandler();
+      cancelEvent(2);
+    } else {
+      Alert.alert(
+        'Código incorrecto',
+        'El código introducido no coincide con el código del evento actual. Por favor, inténtalo de nuevo.',
+        [{ text: 'OK' }],
+        { cancelable: false }
+      );
+    }
   };
 
-  const deleteEvent = async () => {
-    try {
-      const formData = new FormData();
-      formData.append('id', event.id);
-
-      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/delete_event.php`, {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setShowDeleteEventModal(false);
-        navigation.goBack();
-      } else {
-        console.error('Error al eliminar el evento:', data.error);
-      }
-    } catch (error) {
-      console.error('Error al eliminar el evento:', error);
+  const handleFinishEvent = () => {
+    setLoading(true);
+    if (isEventFinished) {
+      cancelEvent(0);
+    } else {
+      setStatus('2');
+      setShowEnterCodeModal(true);
     }
+    setLoading(false);
   };
 
   const calculateInitialRegion = (markers, lat = null, lng = null) => {
@@ -883,7 +906,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
     >
       <View style={[styles.modalContainer, { paddingHorizontal: 20 }]}>
         <View style={styles.modalContent}>
-          <Text style={styles.textModal}>Por seguridad, se debe introducir el código del evento para poder suspenderlo.</Text>
+          <Text style={styles.textModal}>Por seguridad, se debe introducir el código del evento para poder continuar.</Text>
           <TextInput
             style={styles.input}
             onChangeText={setEnteredCode}
@@ -893,7 +916,11 @@ export default function MapMultiAdminScreen({ route, navigation }) {
           />
           <View style={styles.modalButtons}>
             <Button title="Volver" onPress={hideEnterCodeModalHandler} />
-            <Button title="Aceptar" onPress={handleEnterCodeConfirmation} />
+            {status == 1 ? (
+              <Button title="Cancelar" onPress={handleEnterCodeCancelConfirmation} />
+            ) : (
+              <Button title="Aceptar" onPress={handleEnterCodeFinishConfirmation} />
+            )}
           </View>
         </View>
       </View>
@@ -921,43 +948,6 @@ export default function MapMultiAdminScreen({ route, navigation }) {
           <View style={styles.modalButtons}>
             <Button title="Volver" onPress={() => hideCancelModalHandler()} />
             <Button title="Cancelar" onPress={() => cancelEvent(1)} color="red"/>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  // Función para el modal de eliminación de evento
-  const renderDeleteEventModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={showDeleteEventModal}
-      onRequestClose={() => setShowDeleteEventModal(false)}
-    >
-      <View style={styles.centeredView}>
-        <View style={styles.modalView}>
-          <Text style={styles.modalText}>Para eliminar el evento, escriba "ELIMINAR" y presione Eliminar:</Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={setEnteredText}
-            value={enteredText}
-            placeholder="Escriba 'ELIMINAR' aquí"
-          />
-          <View style={styles.buttonContainer}>
-			<Button
-              title="Volver"
-              onPress={() => {
-                setShowDeleteEventModal(false);
-                setEnteredText('');
-              }}
-            />
-            <Button
-              title="Eliminar"
-              onPress={deleteEvent}
-              disabled={enteredText !== 'ELIMINAR'}
-              color="red"
-            />
           </View>
         </View>
       </View>
@@ -1059,12 +1049,21 @@ export default function MapMultiAdminScreen({ route, navigation }) {
             })}
           </MapView>
           <View style={styles.container}>
-            {isEventCancelled && (
+            {isEventCancelled && !isEventFinished && (
               <View style={styles.cancelledMessage}>
                 <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={styles.cancelledText}>Evento cancelado</Text>
                     <Image source={require('../assets/iconInfo.png')} style={styles.infoIcon} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+            {isEventFinished && (
+              <View style={styles.cancelledMessage}>
+                <TouchableOpacity>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={styles.cancelledText}>Evento finalizado</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -1099,22 +1098,24 @@ export default function MapMultiAdminScreen({ route, navigation }) {
                 </Text>
               </TouchableOpacity>
             </View>
-			<View style={styles.containerCancelDelete}>
+			<View style={styles.containerCancelFinish}>
               <TouchableOpacity
                 style={[styles.cancelEventButton, loading && styles.disabledButton]}
                 onPress={loading ? undefined : handleCancelEvent}
-                disabled={loading}
+                disabled={loading || isEventFinished}
               >
                 <Text style={styles.buttonText}>
                   {isEventCancelled ? 'Reanudar evento' : 'Suspender evento'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-	            style={[styles.deleteEventButton, loading && styles.disabledButton]}
-	            onPress={loading ? undefined : showDeleteEventModalHandler}
+	            style={[styles.finishEventButton, loading && styles.disabledButton]}
+	            onPress={loading ? undefined : handleFinishEvent}
 	            disabled={loading}
 	          >
-	            <Text style={[styles.buttonText, { color: 'red' }]}>Eliminar Evento</Text>
+	            <Text style={[styles.buttonText, { color: 'red' }]}>
+                  {isEventFinished ? 'Reanudar evento' : 'Finalizar evento'}
+                </Text>
 	          </TouchableOpacity>
             </View>
           </View>
@@ -1153,7 +1154,6 @@ export default function MapMultiAdminScreen({ route, navigation }) {
           {renderEditEventDateModal()}
           {renderEnterCodeModal()}
           {renderCancelReasonModal()}
-          {renderDeleteEventModal()}
         </View>
       )}
     </View>

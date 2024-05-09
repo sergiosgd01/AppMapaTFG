@@ -20,6 +20,8 @@ export default function MapScreen({ route, navigation }) {
   const [improveLocation, setImproveLocation] = useState(false);
   const mapViewRef = useRef(null);
   const [serviceTypes, setServiceTypes] = useState([]);
+  const [isEventCancelled, setIsEventCancelled] = useState<boolean>(false);
+  const [isEventFinished, setIsEventFinished] = useState<boolean>(false);
 
   const fetchData = async () => {
     await fetchLocationMarkers();
@@ -30,7 +32,6 @@ export default function MapScreen({ route, navigation }) {
   // Este efecto se ejecuta cuando cambia la variable 'improveLocation' o cuando el componente se monta inicialmente.
   useEffect(() => {
     fetchData();
-
     if (fromLiveEvents) {
       const TIME_DISTANCE = event.time_distance;
       const [time, distance] = TIME_DISTANCE.split('-').map(Number);
@@ -49,6 +50,7 @@ export default function MapScreen({ route, navigation }) {
 
   // Este efecto se ejecuta cuando cambia la variable 'locationMarkers'.
   useEffect(() => {
+    obtenerDatosEvento(event.code);
     if (locationMarkers.length > 0) {
       const lastLocation = locationMarkers[locationMarkers.length - 1];
       const region = {
@@ -71,6 +73,23 @@ export default function MapScreen({ route, navigation }) {
   useEffect(() => {
     fetchServiceTypes();
   }, []);
+
+  const obtenerDatosEvento = async (code: string) => {
+    try {
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_events_code.php?code=${code}`);
+      const data = await response.json();
+
+      if (data.length > 0) {
+        const jsonObject = data[0];
+        setIsEventCancelled(jsonObject.status == 1);
+        setIsEventFinished(jsonObject.status == 2);
+      } else {
+        console.error('No se encontraron eventos para el código proporcionado.');
+      }
+    } catch (error) {
+      console.error('Error al obtener datos de evento:', error);
+    }
+  };
 
   const fetchLocationMarkers = async () => {
     try {
@@ -354,7 +373,7 @@ export default function MapScreen({ route, navigation }) {
                 })}
               </MapView>
             <View style={styles.container}>
-              {event.status == 1 && (
+              {isEventCancelled && !isEventFinished && (
                 <View style={styles.cancelledMessage}>
                   <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -364,7 +383,7 @@ export default function MapScreen({ route, navigation }) {
                   </TouchableOpacity>
                 </View>
               )}
-              {event.status == 2 && (
+              {isEventFinished && (
                 <View style={styles.cancelledMessage}>
                   <TouchableOpacity>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>

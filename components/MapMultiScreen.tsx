@@ -40,6 +40,8 @@ export default function MapMultiScreen({ route, navigation }) {
   const [showServices, setShowServices] = useState(false);
   const [serviceLocations, setServiceLocations] = useState([]);
   const [serviceTypes, setServiceTypes] = useState([]);
+  const [isEventCancelled, setIsEventCancelled] = useState<boolean>(false);
+  const [isEventFinished, setIsEventFinished] = useState<boolean>(false);
 
   const fetchData = async () => {
     await fetchUserLocations();
@@ -49,7 +51,6 @@ export default function MapMultiScreen({ route, navigation }) {
 
   useEffect(() => {
     fetchData();
-
     if (fromLiveEvents) {
       const TIME_DISTANCE = event.time_distance;
       const [time, distance] = TIME_DISTANCE.split('-').map(Number);
@@ -67,6 +68,7 @@ export default function MapMultiScreen({ route, navigation }) {
   }, []);
 
   useEffect(() => {
+    obtenerDatosEvento(event.code);
     if (userLocations.length > 0) {
       if (selectedDorsal === allOption) {
         // Muestra la última ubicación recibida de todos los dorsales
@@ -96,6 +98,23 @@ export default function MapMultiScreen({ route, navigation }) {
   useEffect(() => {
     fetchServiceTypes();
   }, []);
+
+  const obtenerDatosEvento = async (code: string) => {
+    try {
+      const response = await fetch(`https://pruebaproyectouex.000webhostapp.com/proyectoTFG/consulta_events_code.php?code=${code}`);
+      const data = await response.json();
+
+      if (data.length > 0) {
+        const jsonObject = data[0];
+        setIsEventCancelled(jsonObject.status == 1);
+        setIsEventFinished(jsonObject.status == 2);
+      } else {
+        console.error('No se encontraron eventos para el código proporcionado.');
+      }
+    } catch (error) {
+      console.error('Error al obtener datos de evento:', error);
+    }
+  };
 
   const fetchUserLocations = async () => {
     try {
@@ -415,7 +434,7 @@ export default function MapMultiScreen({ route, navigation }) {
             })}
           </MapView>
           <View style={styles.container}>
-            {event.status == 1 && (
+            {isEventCancelled && !isEventFinished && (
               <View style={styles.cancelledMessage}>
                 <TouchableOpacity onPress={() => showAlert(event.cancelledInfo)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -425,7 +444,7 @@ export default function MapMultiScreen({ route, navigation }) {
                 </TouchableOpacity>
               </View>
             )}
-            {event.status == 2 && (
+            {isEventFinished && (
               <View style={styles.cancelledMessage}>
                 <TouchableOpacity>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>

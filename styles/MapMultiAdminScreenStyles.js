@@ -57,7 +57,7 @@ const MapMultiAdminScreenStyles = {
     marginLeft: 10,
     width: 160,
   },
-  containerCancelDelete: {
+  containerCancelFinish: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -73,7 +73,7 @@ const MapMultiAdminScreenStyles = {
     marginRight: 10,
     width: 160,
   },
-  deleteEventButton: {
+  finishEventButton: {
     alignItems: 'center',
     backgroundColor: 'transparent',
     borderColor: 'red',
