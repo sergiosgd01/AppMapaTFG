@@ -917,7 +917,7 @@ export default function MapMultiAdminScreen({ route, navigation }) {
           <View style={styles.modalButtons}>
             <Button title="Volver" onPress={hideEnterCodeModalHandler} />
             {status == 1 ? (
-              <Button title="Cancelar" onPress={handleEnterCodeCancelConfirmation} />
+              <Button title="Aceptar" onPress={handleEnterCodeCancelConfirmation} />
             ) : (
               <Button title="Aceptar" onPress={handleEnterCodeFinishConfirmation} />
             )}
