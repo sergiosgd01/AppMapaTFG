@@ -404,23 +404,31 @@ export default function MapScreen({ route, navigation }) {
               </View>
               <View style={styles.containerShow}>
                 <TouchableOpacity style={[styles.showRouteButton, showRoute && styles.activeButton]} onPress={handleShowRoute}>
-                  <Text style={styles.buttonText}>{showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}</Text>
+                  <Text style={styles.buttonText} numberOfLines={1} adjustsFontSizeToFit>
+                    {showRoute ? 'Ocultar Ruta Completa' : 'Mostrar Ruta Completa'}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.showServicesButton, showServices && styles.activeButton]} onPress={handleShowServices}>
-                  <Text style={[styles.buttonText, {color: '#6C21DC'}]}>{showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}</Text>
+                  <Text style={[styles.buttonText, { color: '#6C21DC' }]} numberOfLines={1} adjustsFontSizeToFit>
+                    {showServices ? 'Ocultar Servicios' : 'Mostrar Servicios'}
+                  </Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.containerImproveUpdate}>
                 <TouchableOpacity style={[styles.commonButton, styles.improveLocationButton]} onPress={() => setImproveLocation(!improveLocation)}>
                   <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-                    <Text style={[styles.buttonText, {color: '#333'}]}>Mejorar Ubicación</Text>
+                    <Text style={[styles.buttonText, { color: '#333' }]} numberOfLines={1} adjustsFontSizeToFit>
+                      Mejorar Ubicación
+                    </Text>
                     <Switch onValueChange={() => setImproveLocation(!improveLocation)} value={improveLocation} />
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.commonButton} onPress={fetchData}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Image source={reloadIcon} style={styles.imageStyle} />
-                    <Text style={[styles.buttonText, {color: '#333'}]}>Actualizar Marcadores</Text>
+                    <Text style={[styles.buttonText, { color: '#333' }]} numberOfLines={1} adjustsFontSizeToFit>
+                      Actualizar Marcadores
+                    </Text>
                   </View>
                 </TouchableOpacity>
               </View>

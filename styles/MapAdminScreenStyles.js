@@ -36,6 +36,8 @@ const MapScreenStyles = {
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
+    flexWrap: 'wrap',
   },
   showRouteButton: {
     alignItems: 'center',

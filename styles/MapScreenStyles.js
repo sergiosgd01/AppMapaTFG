@@ -29,6 +29,8 @@ const MapScreenStyles = {
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
+    flexWrap: 'wrap',
   },
   commonButton: {
     alignItems: 'center',

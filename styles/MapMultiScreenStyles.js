@@ -15,6 +15,7 @@ const MapMultiScreenStyles = {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 10,
   },
   containerPickerUpdate: {
     flex: 1,
@@ -29,6 +30,8 @@ const MapMultiScreenStyles = {
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
+    flexWrap: 'wrap',
   },
   calloutContainer: {
     alignItems: 'center',

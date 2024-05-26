@@ -36,6 +36,8 @@ const MapMultiAdminScreenStyles = {
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
+    flexWrap: 'wrap',
   },
   showRouteButton: {
     alignItems: 'center',
