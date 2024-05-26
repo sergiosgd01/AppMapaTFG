@@ -45,6 +45,7 @@ export default function MapScreen({ route, navigation }) {
   const [selectedServiceType, setSelectedServiceType] = useState('1');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('0');
+  const [mapCenteredInitially, setMapCenteredInitially] = useState(false);
 
   const fetchData = async () => {
     await fetchLocationMarkers();
@@ -74,7 +75,7 @@ export default function MapScreen({ route, navigation }) {
   // Este efecto se ejecuta cuando cambia la variable 'locationMarkers'.
   useEffect(() => {
     obtenerDatosEvento(event.code);
-    if (locationMarkers.length > 0) {
+    if (locationMarkers.length > 0 && !mapCenteredInitially) {
       const lastLocation = locationMarkers[locationMarkers.length - 1];
       const region = {
         latitude: parseFloat(lastLocation.latitude),
@@ -83,8 +84,9 @@ export default function MapScreen({ route, navigation }) {
         longitudeDelta: 0.05,
       };
       setInitialRegion(region);
+      setMapCenteredInitially(true);
     }
-  }, [locationMarkers]);
+  }, [locationMarkers, mapCenteredInitially]);
 
   useEffect(() => {
     if (editingRoute) {
