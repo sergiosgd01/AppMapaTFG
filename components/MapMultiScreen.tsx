@@ -42,6 +42,7 @@ export default function MapMultiScreen({ route, navigation }) {
   const [serviceTypes, setServiceTypes] = useState([]);
   const [isEventCancelled, setIsEventCancelled] = useState<boolean>(false);
   const [isEventFinished, setIsEventFinished] = useState<boolean>(false);
+  const [mapCentered, setMapCentered] = useState(false);
 
   const fetchData = async () => {
     await fetchUserLocations();
@@ -69,31 +70,17 @@ export default function MapMultiScreen({ route, navigation }) {
 
   useEffect(() => {
     obtenerDatosEvento(event.code);
-    if (userLocations.length > 0) {
-      if (selectedDorsal === allOption) {
-        // Muestra la última ubicación recibida de todos los dorsales
-        const lastLocation = userLocations[userLocations.length - 1];
-        mapRef.current.animateToRegion({
-          latitude: parseFloat(lastLocation.latitude),
-          longitude: parseFloat(lastLocation.longitude),
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }, 1000);
-      } else {
-        // Muestra la ubicación del dorsal seleccionado
-        const selectedLocations = userLocations.filter(location => location.dorsal === selectedDorsal);
-        const lastLocation = selectedLocations[selectedLocations.length - 1];
-        if (lastLocation) {
-          mapRef.current.animateToRegion({
-            latitude: parseFloat(lastLocation.latitude),
-            longitude: parseFloat(lastLocation.longitude),
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }, 1000);
-        }
-      }
+    if (!mapCentered && userLocations.length > 0) {
+      const lastLocation = userLocations[userLocations.length - 1];
+      mapRef.current.animateToRegion({
+        latitude: parseFloat(lastLocation.latitude),
+        longitude: parseFloat(lastLocation.longitude),
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 1000);
+      setMapCentered(true);
     }
-  }, [selectedDorsal, userLocations]);
+  }, [userLocations, mapCentered]);
 
   useEffect(() => {
     fetchServiceTypes();
@@ -247,13 +234,6 @@ export default function MapMultiScreen({ route, navigation }) {
       const dorsalLocations = userLocations.filter(location => location.dorsal === selectedDorsal);
       const latestLocation = dorsalLocations[dorsalLocations.length - 1];
       if (latestLocation) {
-        const region = {
-          latitude: parseFloat(latestLocation.latitude),
-          longitude: parseFloat(latestLocation.longitude),
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        };
-        mapRef.current.animateToRegion(region, 1000);
 
         return (
           <CustomMarker
@@ -288,19 +268,6 @@ export default function MapMultiScreen({ route, navigation }) {
           return null;
         }
       });
-
-      // Calcula el centro del mapa con la última ubicación de todas las dorsales
-      const latestLocations = userLocations.filter(location => uniqueDorsals.includes(location.dorsal));
-      const latestOverallLocation = latestLocations[latestLocations.length - 1];
-      if (latestOverallLocation) {
-        const region = {
-          latitude: parseFloat(latestOverallLocation.latitude),
-          longitude: parseFloat(latestOverallLocation.longitude),
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        };
-        mapRef.current.animateToRegion(region, 1000);
-      }
 
       return markers;
     }

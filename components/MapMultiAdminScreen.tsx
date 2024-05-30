@@ -632,13 +632,6 @@ export default function MapMultiAdminScreen({ route, navigation }) {
         }
       });
 
-      // Calcula el centro del mapa con la última ubicación de todas las dorsales
-      const latestLocations = userLocations.filter(location => uniqueDorsals.includes(location.dorsal));
-      const latestOverallLocation = latestLocations[latestLocations.length - 1];
-      if (latestOverallLocation) {
-
-      }
-
       return markers;
     }
   };
